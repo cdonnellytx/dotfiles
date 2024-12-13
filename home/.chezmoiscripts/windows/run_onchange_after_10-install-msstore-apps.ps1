@@ -10,24 +10,12 @@ if ($Env:CHEZMOI_VERBOSE -eq 1)
     $PSDefaultParameterValues['*:Verbose'] = $true
 }
 
-class WinGetItem
+class MSStoreItem
 {
-    [string] $Id
+    # .NOTES
+    # MSCRAP: Only Install-WinGetPackage recognizes MSStore apps by Id.
+    # Everything else recognizes it by "Moniker".
     [string] $Moniker
-    [string] $Source = 'winget'
-
-    WinGetItem() {}
-    WinGetItem([string] $Id)
-    {
-        $this.Id = $Id
-    }
-}
-
-# .NOTES
-# MSCRAP: Only Install-WinGetPackage recognizes MSStore apps by Id.
-# Everything else recognizes it by "Moniker".
-class MSStoreItem : WinGetItem
-{
     [string] $Source = 'msstore'
 
     # A name for documentation purposes.  Not WinGetPackage name.
