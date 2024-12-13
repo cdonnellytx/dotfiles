@@ -10,7 +10,29 @@ if ($Env:CHEZMOI_VERBOSE -eq 1)
     $PSDefaultParameterValues['*:Verbose'] = $true
 }
 
-class MSStoreItem
+class WinGetItemBase
+{
+}
+
+# Sourced from WinGet explicitly
+class WinGetItem : WinGetItemBase
+{
+    [string] $Id
+    [string] $Source = 'winget'
+    WinGetItem() {}
+
+    WinGetItem([string] $Id)
+    {
+        $this.Id = $Id
+    }
+
+    [string] ToString()
+    {
+        return $this.Id
+    }
+}
+
+class MSStoreItem : WinGetItemBase
 {
     # .NOTES
     # MSCRAP: Only Install-WinGetPackage recognizes MSStore apps by Id.
@@ -20,9 +42,6 @@ class MSStoreItem
 
     # A name for documentation purposes.  Not WinGetPackage name.
     hidden [string] $Description
-
-    # An alternate WinGetPackage.ID from source, if known.
-    hidden [string] $AlternateId
 
     MSStoreItem() {}
 
@@ -47,27 +66,27 @@ class MSStoreItem
     }
 }
 
-[MSStoreItem[]] $storeApps = @(
+$apps = @(
     [MSStoreItem]::new('9mz1snwt0n5d', 'PowerShell')
     [MSStoreItem]::new('9p7knl5rwt25', 'Sysinternals Suite')
-    [MSStoreItem] @{
-        Moniker = 'XP99C9G0KRDZ27'
-        Description = '1Password'
-        AlternateId = 'AgileBits.1Password'
-    }
+
+    # MSCRAP: I tried installing 1Password from MSStore but it kept installing the main WinGet instance
+    # -and- saying it had installed -both-, though the Store itself says otherwise.
+    # So just install the "normal" item.
+    # NOTE: This did not happen with PowerShell, I am not sure why.
+    [WinGetItem]::new('AgileBits.1Password')
 )
 
-$installedStoreApps = $storeApps | Get-WinGetPackage -MatchOption:Equals
-$installedWinGetApps = $storeApps | Where-Object AlternateId | ForEach-Object { Get-WinGetPackage -Source 'winget' -Id:$_.AlternateId }
-$storeAppsToInstall = $storeApps | Where-Object Moniker -notin $installedStoreApps.Id | Where-Object AlternateId -notin $installedWinGetApps.Id
+$installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
+$appsToInstall = $apps | Where-Object Id -notin $installedApps.Id | Where-Object Moniker -notin $installedApps.Id
 
-Write-Information "Installed apps:$($installedStoreApps + $installedWinGetApps | Out-String)"
+Write-Information "Installed apps:$($installedApps | Out-String)"
 
-if ($storeAppsToInstall)
+if ($appsToInstall)
 {
-    Write-Information "To install: $($storeAppsToInstall | Out-String)"
+    Write-Information "To install: $($appsToInstall | Out-String)"
     # MSCRAP: Microsoft.WinGet.Client\Install-WinGetPackage 1.10.90 _still_ doesn't honor `-WhatIf`.
-    if ($PSCmdlet.ShouldProcess("apps: $($storeAppsToInstall)", "Install WinGet packages"))
+    if ($PSCmdlet.ShouldProcess("apps: $($appsToInstall)", "Install WinGet packages"))
     {
         $appsToInstall | Install-WinGetPackage -ErrorAction Stop
     }
