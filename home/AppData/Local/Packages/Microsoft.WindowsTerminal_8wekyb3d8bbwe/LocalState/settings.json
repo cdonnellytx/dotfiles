@@ -1,0 +1,143 @@
+{
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "actions": 
+    [
+        {
+            "command": 
+            {
+                "action": "copy",
+                "singleLine": false
+            },
+            "id": "User.copy.644BA8F2",
+            "keys": "ctrl+c"
+        },
+        {
+            "command": "paste",
+            "id": "User.paste",
+            "keys": "ctrl+v"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.A6751878",
+            "keys": "alt+shift+d"
+        }
+    ],
+    "copyFormatting": "none",
+    "copyOnSelect": true,
+    "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+    "disabledProfileSources": 
+    [
+        "Windows.Terminal.Azure"
+    ],
+    "initialCols": 143,
+    "initialRows": 35,
+    "newTabMenu": 
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+    "profiles": 
+    {
+        "defaults": 
+        {
+            "font": 
+            {
+                "face": "CaskaydiaCove Nerd Font Mono",
+                "size": 12
+            }
+        },
+        "list": 
+        [
+            {
+                "backgroundImage": "C:\\Users\\cdonnelly\\OneDrive\\Pictures\\backgrounds\\emailbackground.png",
+                "backgroundImageAlignment": "bottomRight",
+                "backgroundImageOpacity": 0.1,
+                "backgroundImageStretchMode": "uniform",
+                "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+                "hidden": false,
+                "name": "PowerShell",
+                "source": "Windows.Terminal.PowershellCore"
+            },
+            {
+                "colorScheme": "Campbell Powershell",
+                "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
+                "hidden": false,
+                "name": "Windows PowerShell"
+            },
+            {
+                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+                "hidden": false,
+                "name": "Command Prompt"
+            },
+            {
+                "guid": "{2c4de342-38b7-51cf-b940-2309a097f518}",
+                "hidden": false,
+                "name": "Ubuntu",
+                "source": "Windows.Terminal.Wsl"
+            },
+            {
+                "backgroundImage": "C:/Program Files/Git/mingw64/share/git/git-for-windows.ico",
+                "backgroundImageAlignment": "bottomRight",
+                "backgroundImageOpacity": 0.1,
+                "backgroundImageStretchMode": "none",
+                "commandline": "C:/Program Files/Git/bin/bash.exe --login",
+                "guid": "{14ad203f-52cc-4110-90d6-d96e0f41b64d}",
+                "historySize": 9001,
+                "icon": "C:/Program Files/Git/mingw64/share/git/git-for-windows.ico",
+                "name": "Git Bash",
+                "startingDirectory": "%USERPROFILE%",
+                "tabTitle": "Git Bash"
+            },
+            {
+                "backgroundImage": "C:\\Users\\cdonnelly\\OneDrive\\Pictures\\backgrounds\\emailbackground.png",
+                "backgroundImageAlignment": "bottomRight",
+                "backgroundImageOpacity": 1,
+                "backgroundImageStretchMode": "uniform",
+                "colorScheme": "Vintage",
+                "commandline": "cmd.exe /k sqlite3 -batch -readonly -list -noheader D:\\GitHub\\nolanbconway\\strongbad_email\\strongbad_emails.db \"select message from email where rowid = (abs(random()) % (select (select max(rowid) from email)+1))\"",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": true,
+                "font": 
+                {
+                    "face": "BigBlueTermPlus Nerd Font Mono",
+                    "size": 20
+                },
+                "guid": "{0dbf7b02-d0dd-45a5-8192-01e9d025ab30}",
+                "hidden": false,
+                "name": "strongbad_email.exe",
+                "startingDirectory": "C:/",
+                "suppressApplicationTitle": true,
+                "tabTitle": "Compy 386!"
+            },
+            {
+                "guid": "{dca90feb-4481-5af8-9b24-e15eb06ae442}",
+                "hidden": false,
+                "name": "Developer Command Prompt for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{0549744c-94e1-5dc8-9be5-9693df16e71f}",
+                "hidden": false,
+                "name": "Developer PowerShell for VS 2022",
+                "source": "Windows.Terminal.VisualStudio"
+            },
+            {
+                "guid": "{2ece5bfe-50ed-5f3a-ab87-5cd4baafed2b}",
+                "hidden": false,
+                "name": "Git Bash",
+                "source": "Git"
+            }
+        ]
+    },
+    "schemes": [],
+    "tabWidthMode": "equal",
+    "themes": [],
+    "useAcrylicInTabRow": true
+}
