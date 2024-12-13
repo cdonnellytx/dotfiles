@@ -1,6 +1,13 @@
-This is my bash profile and dotfiles
+# dotfiles
 
-## Timing bash
+This is my dotfiles and Bash profile, managed by [Chezmoi](https://www.chezmoi.io/).
 
-    mv .bashrc .real-bashrc
-    echo "time source .real-bashrc" > .bashrc
+## Setup
+
+### Windows
+
+```powershell
+winget install --id 'twpayne.chezmoi' --source 'winget'
+chezmoi init cdonnellytx
+```
+
