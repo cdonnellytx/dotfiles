@@ -11,10 +11,6 @@ param()
 
 Set-StrictMode -Version Latest
 
-
-# The default WinGet source is, obviously, WinGet.
-$DefaultSource = 'winget'
-
 filter flatten
 {
     if ($_ -is [object[]])
@@ -296,7 +292,7 @@ function Find-ViaWinGet
         # The source to install via.  Default is explicitly 'winget'.
         [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [string] $Source = $DefaultSource,
+        [string] $Source = 'winget',
 
         # When true, include prerelease versions.
         [Parameter()]
@@ -323,8 +319,8 @@ function Find-ViaWinGet
         # Replace version with PackageVersion, Sort output by version descending.
         Microsoft.WinGet.Client\Find-WinGetPackage @PSBoundParameters |
             Select-Object -ExcludeProperty 'Version' -Property *,
-                @{ Name = 'Version'; Expression = { [PackageVersion] $_.Version } },
-                @{ Name = 'RawVersion'; Expression = 'Version' } |
+            @{ Name = 'Version'; Expression = { [PackageVersion] $_.Version } },
+            @{ Name = 'RawVersion'; Expression = 'Version' } |
             Where-Object { $AllowPrerelease -or !$_.Version.PreReleaseLabel } |
             Sort-Object -Descending -Property Version
     }
@@ -350,42 +346,14 @@ Microsoft.WinGet.Client.Engine.PSObjects.PSInstallResult
 #>
 function Install-ViaWinGet
 {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'Id')]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([void])]
     [OutputType('Microsoft.WinGet.Client.Engine.PSObjects.PSInstalledCatalogPackage')]
     [OutputType('Microsoft.WinGet.Client.Engine.PSObjects.PSInstallResult')]
     param
     (
-        # Filter results by id
-        [Parameter(Mandatory, Position = 0, ParameterSetName = 'Id', ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Id,
-
-        # Filter results by name
-        [Parameter(Mandatory, Position = 0, ParameterSetName = 'Name', ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Name,
-
-        # Filter results by moniker
-        [Parameter(Mandatory, Position = 0, ParameterSetName = 'Moniker', ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Moniker,
-
-        # The source to install via.  Default is explicitly 'winget'.
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Source = $DefaultSource,
-
-        # The scope of the install (system, user, or unknown).
-        # MSCRAP: "UserOrUnknown" is interpeted as "NotMachine" -- IOW, if Machine and Machine alone is defined, it will fail.
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [Microsoft.WinGet.Client.PSObjects.PSPackageInstallScope] $Scope = [Microsoft.WinGet.Client.PSObjects.PSPackageInstallScope]::UserOrUnknown,
-
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string] $Override,
-
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string] $Version,
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [WinGetItem] $InputObject,
 
         # The mode of install.
         #   - `Default`: show the installer (noninteractive)
@@ -400,7 +368,7 @@ function Install-ViaWinGet
         #   - `EqualsCaseInsensitive`
         #   - `StartsWithCaseInsensitive`
         #   - `ContainsCaseInsensitive`
-        [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption] $MatchOption = 'Equals',
+        [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption] $MatchOption = [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption]::Equals,
 
         # Force the installer to run.
         [Parameter()]
@@ -415,79 +383,44 @@ function Install-ViaWinGet
     {
         #region Arguments
 
-        [string] $description = switch ($PSCmdlet.ParameterSetName)
-        {
-            'Id' { "id: ${Id}" }
-            'Name' { "name: ${Name}" }
-            'Moniker' { "moniker: ${Moniker}" }
-            default
-            {
-                Write-Error -Category NotImplemented "For parameter set '${_}'"
-                return
-            }
-        }
-
-        [hashtable] $installSplat = [hashtable] $PSBoundParameters
-        [hashtable] $testSplat = [hashtable] $PSBoundParameters
-
-        # Items in neither Get nor Install
-        'PassThru', 'Debug' | ForEach-Object {
-            $testSplat.Remove($_)
-            $installSplat.Remove($_)
-        }
-
-        # Items in Install, not in Get
-        $testSplat.Remove('WhatIf')
-        $testSplat.Remove('Force')
-        $testSplat.Remove('Version')
-
-        # Scope (not in Get command, differing default on Install)
-        $testSplat.Remove('Scope')
-        $installSplat['Scope'] = $Scope
-
-        # Mode (not in Get command, differing default on Install)
-        $testSplat.Remove('Mode')
-        $installSplat['Mode'] = $Mode
-
-        #
-
         if ($DebugPreference)
         {
-            Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name):`nPARAMS:`n$($PSBoundParameters | Out-String)`nTEST SPLAT:`n$($testSplat | Out-String)`nINSTALL SPLAT:`n$($installSplat | Out-String)"
+            Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name): InputObject: $($InputObject | Out-String)"
         }
 
-        #endregion Arguments
+        # #endregion Arguments
 
         # WinGet install wrapper.
         # Be warned that `winget.exe install` (and Install-WinGetPackage) always installs certain apps, like Dropbox, so we have to test for its existence first.
-        Write-Verbose "CALL Get-WinGetPackage"
-        if (!$Force -and ($result = Get-WinGetPackage -ErrorAction:Stop @testSplat))
+        if (!$Force -and ($result = $InputObject | Get-WinGetPackage -MatchOption:$MatchOption -ErrorAction:Stop))
         {
             if ($DebugPreference)
             {
-                Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name): CALL Get-WinGetPackage`nINPUT:`n$($testSplat | Out-String)OUTPUT:`n$($result | Out-String)"
+                Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name): CALL Get-WinGetPackage`nINPUT:`n$($InputObject | Out-String)OUTPUT:`n$($result | Out-String)"
             }
 
             if ($InformationPreference)
             {
-                Write-Information -Tags 'winget' "Skipping ${description} (v$($result.InstalledVersion) installed)"
+                Write-Information -Tags 'winget' "Skipping ${InputObject} (v$($result.InstalledVersion) installed)"
             }
+
             if ($PassThru)
             {
                 Add-Member -InputObject:$result -NotePropertyName 'Status' -NotePropertyValue 'AlreadyInstalled' -PassThru:$PassThru
             }
+
             return
         }
 
-        if (!$PSCmdlet.ShouldProcess(($description -join ', '), 'Install via WinGet'))
+        if (!$PSCmdlet.ShouldProcess($InputObject.ToString(), 'Install via WinGet'))
         {
             if ($PassThru)
             {
                 # Return something shaped like Microsoft.WinGet.Client.Engine.PSObjects.PSInstallResult.
                 return [PSCustomObject] @{
-                    Id = $Id
-                    Name = $name
-                    Source = $source
+                    Id = $InputObject.Id
+                    Name = $InputObject.Description
+                    Source = $InputObject.Source
                     InstallerErrorCode = [uint] 0
                     Status = 'DryRun'
                     RebootRequired = $false
@@ -499,7 +432,7 @@ function Install-ViaWinGet
         }
 
         Write-Verbose "CALL Install-WinGetPackage"
-        $result = Microsoft.WinGet.Client\Install-WinGetPackage @installSplat
+        $result = $InputObject | Microsoft.WinGet.Client\Install-WinGetPackage
 
         switch ($result.Status)
         {
@@ -508,7 +441,7 @@ function Install-ViaWinGet
 
             'NoApplicableInstallers'
             {
-                Write-Error -Category NotEnabled -Message "Scope '${Scope}' is not supported for this application."
+                Write-Error -Category NotEnabled -Message "Scope '$($InputObject.Scope)' is not supported for this application."
             }
 
             'InstallError'
@@ -526,7 +459,7 @@ function Install-ViaWinGet
                         # https://github.com/microsoft/winget-cli/issues/2052#issuecomment-1516664318
                         if ($Id)
                         {
-                            Start-Process "ms-windows-store://pdp/?ProductId=${Id}"
+                            Start-Process "ms-windows-store://pdp/?ProductId=$($InputObject.Id)"
                         }
                         Write-Error -Category NotImplemented -Message "Installing from the Microsoft Store currently only works for Apps that are `"Free`" and rated `"e`" for everyone."
                         return
@@ -656,3 +589,35 @@ function Lock-WinGet
     }
 }
 
+class WinGetItem
+{
+    [string] $Id
+    [string] $Source = 'winget'
+    [PSPackageInstallScope] $Scope = 'UserOrUnknown'
+
+    # A name for documentation purposes.  Not WinGetPackage name.
+    [string] $Description
+
+    # Zero-arg cast constructor
+    WinGetItem() {}
+
+    WinGetItem([string] $Id)
+    {
+        $this.Id = $Id
+    }
+
+    WinGetItem([string] $Id, [string] $Description)
+    {
+        $this.Id = $Id
+        $this.Description = $Description
+    }
+
+    [string] ToString()
+    {
+        if ($this.Description)
+        {
+            return '"{0}" (id: {1})' -f $this.Description, $this.Id
+        }
+        return $this.Id
+    }
+}
