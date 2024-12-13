@@ -38,22 +38,24 @@ Gets the `file` command.
 #>
 function Get-FileCommand
 {
+    [CmdletBinding()]
+    param()
+
     try
     {
         Get-Command -CommandType Application -Name 'file' -ErrorAction Stop
     }
     catch
     {
-        if ($IsWindows -and ($wsl = Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1) -and (& $wsl --status) -and $?)
+        if ($IsWindows -and ($wsl = Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1))
         {
-            
-            if (& $wsl command -v file)
+            if ((wsl --status) -and $? -and (wsl command -v file))
             {
                 return { wsl file ($args | wslpath) }
             }
         }
 
-        throw $_
+        Write-Error -ErrorRecord $_ -ErrorAction:$ErrorActionPreference
     }
 }
 
@@ -76,7 +78,12 @@ class Result
 
 ################################################################################
 
-$file = Get-FileCommand -ErrorAction Stop
+if (!($file = Get-FileCommand -ErrorAction SilentlyContinue))
+{
+    Write-Warning "Skipping: file command not found"
+    return
+}
+
 $result = [Result]::new("Build magic file")
 
 $magicFile = Join-Path $HOME '.magic.mgc'
