@@ -89,6 +89,7 @@ $apps = @(
     [WinGetItem] @{
         Id = 'Mozilla.Firefox'
         Scope = 'System'
+    }
 )
 
 $installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
