@@ -75,6 +75,11 @@ $apps = @(
     # So just install the "normal" item.
     # NOTE: This did not happen with PowerShell, I am not sure why.
     [WinGetItem]::new('AgileBits.1Password')
+
+    # Firefox from MS Store currently fails to launch URLs from elevated processes when the machine defaults to launching as not elevated.
+    #   - Windows 10 21H1 10.0.19043.1348
+    #   - Firefox 94.0.2
+    [WinGetItem]::new('Mozilla.Firefox')
 )
 
 $installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
