@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>git-filter-repo(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -837,10 +837,13 @@ pruning commits which become empty due to the above filters (also
 </li>
 <li>
 <p>
-creating replace-refs (see <a href="git-replace.html">git-replace(1)</a>) for old commit
-    hashes, which if manually pushed and fetched will allow users to
-    continue to refer to new commits using (unabbreviated) old commit
-    IDs
+rewriting stashes
+</p>
+</li>
+<li>
+<p>
+baking the changes made by refs/replace/ refs into the permanent
+    history and removing the replace refs
 </p>
 </li>
 <li>
@@ -852,6 +855,17 @@ stripping of original history to avoid mixing old and new history
 <p>
 repacking the repository post-rewrite to shrink the repo for the
     user
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>And additional facilities are available via a config option</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+creating replace-refs (see <a href="git-replace.html">git-replace(1)</a>) for old commit
+    hashes, which if manually pushed and fetched will allow users to
+    continue to refer to new commits using (unabbreviated) old commit
+    IDs
 </p>
 </li>
 </ul></div>
@@ -1012,7 +1026,7 @@ paths, e.g. <code>--path olddir/ --path newdir/</code></p></div>
 </dt>
 <dd>
 <p>
-        Treat the project root as instead being under
+        Treat the project root as if it were under
         &lt;directory&gt;.  Equivalent to using <code>--path-rename :&lt;directory&gt;/</code>
 </p>
 </dd>
@@ -1134,20 +1148,29 @@ paths, e.g. <code>--path olddir/ --path newdir/</code></p></div>
 <h3 id="_parent_rewriting">Parent rewriting</h3>
 <div class="dlist"><dl>
 <dt class="hdlist1">
---replace-refs {delete-no-add, delete-and-add, update-no-add, update-or-add, update-and-add}
+--replace-refs {delete-no-add, delete-and-add, update-no-add, update-or-add, update-and-add, old-default}
 </dt>
 <dd>
 <p>
-        Replace refs (see <a href="git-replace.html">git-replace(1)</a>) are used to rewrite
-        parents (unless turned off by the usual git mechanism); this
-        flag specifies what do do with those refs afterward. Replace
-        refs can either be deleted or updated to point at new commit
-        hashes. Also, new replace refs can be added for each commit
-        rewrite.  With <em>update-or-add</em>, new replace refs are only
-        added for commit rewrites that aren&#8217;t used to update an
-        existing replace ref. default is <em>update-and-add</em> if
-        $GIT_DIR/filter-repo/already_ran does not exist;
-        <em>update-or-add</em> otherwise.
+        How to handle replace refs (see git-replace(1)).  Replace refs
+        can be added during the history rewrite as a way to allow
+        users to pass old commit IDs (from before git-filter-repo was
+        run) to git commands and have git know how to translate those
+        old commit IDs to the new (post-rewrite) commit IDs.  Also,
+        replace refs that existed before the rewrite can either be
+        deleted or updated.  The choices to pass to --replace-refs
+        thus need to specify both what to do with existing refs and
+        what to do with commit rewrites.  Thus <em>update-and-add</em> means
+        to update existing replace refs, and for any commit rewrite
+        (even if already pointed at by a replace ref) add a new
+        refs/replace/ reference to map from the old commit ID to the
+        new commit ID.  The default is update-no-add, meaning update
+        existing replace refs but do not add any new ones.  There is
+        also a special <em>old-default</em> option for picking the default
+        used in versions prior to git-filter-repo-2.45, namely
+        <em>update-and-add</em> upon the first run of git-filter-repo in a
+        repository and <em>update-or-add</em> if running git-filter-repo
+        again on a repository.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1236,6 +1259,19 @@ paths, e.g. <code>--path olddir/ --path newdir/</code></p></div>
 </p>
 </dd>
 <dt class="hdlist1">
+--file-info-callback &lt;function_body&gt;
+</dt>
+<dd>
+<p>
+        Python code body for processing the combination of filename, mode,
+        and associated file contents; see &lt;&lt;CALLBACKS&gt;.  Note that when
+        --file-info-callback is specified, any replacements specified by
+        --replace-text will not be automatically applied; instead, you
+        have control within the --file-info-callback to choose which files
+        to apply those transformations to.
+</p>
+</dd>
+<dt class="hdlist1">
 --blob-callback &lt;function_body&gt;
 </dt>
 <dd>
@@ -1257,6 +1293,10 @@ paths, e.g. <code>--path olddir/ --path newdir/</code></p></div>
 <dd>
 <p>
         Python code body for processing tag objects; see <a href="#CALLBACKS">[CALLBACKS]</a>.
+        Note that lightweight tags have no tag object and thus are not
+        handled by this callback.  The only thing you really could do with a
+        lightweight tag is rename it, but for that you should see
+        --refname-callback instead.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1270,16 +1310,80 @@ paths, e.g. <code>--path olddir/ --path newdir/</code></p></div>
 </dl></div>
 </div>
 <div class="sect2">
+<h3 id="_sensitive_data_removal">Sensitive Data Removal</h3>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+--sensitive-data-removal
+</dt>
+<dt class="hdlist1">
+--sdr
+</dt>
+<dd>
+<p>
+        This rewrite is intended to remove sensitive data from a repository.
+        Gather extra information from the rewrite needed to provide
+        additional instructions on how to clean up other copies.  This
+        includes:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Fetching all refs, so that if refs outside of branches and tags
+            also reference the sensitive data, they can be cleaned up too
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>Note that if you have any local-only changes (i.e. un-pushed
+changes) in your repository, on any branch or ref, this fetch step
+may discard them.  Working in a fresh clone avoids this problem;
+see also the --no-fetch option if you don't want to work with a
+fresh clone and you have important local-only changes.</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+Tracking and reporting on the first changed commit(s)
+</p>
+</li>
+<li>
+<p>
+Tracking and reporting whether any LFS objects become orphaned by
+            the rewrite, so they can be removed
+</p>
+</li>
+<li>
+<p>
+Providing additional instructions at the end on how to clean up
+            the repository you cloned from, and other clones of the repo
+</p>
+</li>
+</ul></div>
+</dd>
+<dt class="hdlist1">
+--no-fetch
+</dt>
+<dd>
+<p>
+        Avoid the "fetch all refs" step with --sensitive-data-removal, and
+        thus avoid overwriting local-only changes in the repository, but at
+        the risk of leaving the sensitive data in other refs in the source
+        repository.  This option is implied by --partial or any flag that
+        implies --partial.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect2">
 <h3 id="_location_to_filter_from_to">Location to filter from/to</h3>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
 <div class="title">Note</div>
 </td>
-<td class="content">Specifying alternate source or target locations implies --partial
-except that the normal default for --replace-refs is used.  However, unlike
-normal uses of --partial, this doesn&#8217;t risk mixing old and new history
-since the old and new histories are in different repositories.</td>
+<td class="content">Specifying alternate source or target locations implies
+--partial.  However, unlike normal uses of --partial, this doesn&#8217;t
+risk mixing old and new history since the old and new histories are in
+different repositories.</td>
 </tr></table>
 </div>
 <div class="dlist"><dl>
@@ -1337,8 +1441,7 @@ since the old and new histories are in different repositories.</td>
 <dd>
 <p>
         Do a partial history rewrite, resulting in the mixture of old and
-        new history.  This implies a default of update-no-add for
-        --replace-refs, disables rewriting refs/remotes/origin/* to
+        new history.  This disables rewriting refs/remotes/origin/* to
         refs/heads/*, disables removing of the <em>origin</em> remote, disables
         removing unexported refs, disables expiring the reflog, and
         disables the automatic post-filter gc.  Also, this modifies
@@ -1409,10 +1512,10 @@ since the old and new histories are in different repositories.</td>
 <h2 id="_output">OUTPUT</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Every time filter-repo is run, files are created in the <code>.git/filter-repo/</code>
-directory. These files are overwritten unconditionally on every run.</p></div>
+directory. These files are updated or overwritten on every run.</p></div>
 <div class="sect2">
 <h3 id="_commit_map">Commit map</h3>
-<div class="paragraph"><p>The <code>.git/filter-repo/commit-map</code> file contains a mapping of how all
+<div class="paragraph"><p>The <code>$GIT_DIR/filter-repo/commit-map</code> file contains a mapping of how all
 commits were (or were not) changed.</p></div>
 <div class="ulist"><ul>
 <li>
@@ -1428,8 +1531,8 @@ Commit mappings are in no particular order
 <li>
 <p>
 All commits in range of the rewrite will be listed, even commits
-    that are unchanged (e.g. because the commit pre-dated when the
-    large file(s) were introduced to the repo).
+    that are unchanged (e.g. because the commit pre-dated when files
+    the filtering operation are removing were introduced to the repo).
 </p>
 </li>
 <li>
@@ -1443,8 +1546,8 @@ An all-zeros hash, or null SHA, represents a non-existent object.
 </div>
 <div class="sect2">
 <h3 id="_reference_map">Reference map</h3>
-<div class="paragraph"><p>The <code>.git/filter-repo/ref-map</code> file contains a mapping of which local
-references were changed.</p></div>
+<div class="paragraph"><p>The <code>$GIT_DIR/filter-repo/ref-map</code> file contains a mapping of which local
+references were (or were not) changed.</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -1453,7 +1556,7 @@ A header is the first line with the text "old", "new" and "ref"
 </li>
 <li>
 <p>
-Reference mappings are in no particular order
+Reference mappings are sorted by ref
 </p>
 </li>
 <li>
@@ -1463,6 +1566,121 @@ An all-zeros hash, or null SHA, represents a non-existent object.
 </p>
 </li>
 </ul></div>
+</div>
+<div class="sect2">
+<h3 id="_changed_references">Changed References</h3>
+<div class="paragraph"><p>The <code>$GIT_DIR/filter-repo/changed-refs</code> file contains a list of refs that
+were changed.</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+No header is provided
+</p>
+</li>
+<li>
+<p>
+Lists the subsets of refs from ref-map for which old != new
+</p>
+</li>
+<li>
+<p>
+While unnecessary since this provides no new information over ref-map,
+    it does make it easier to quickly determine which refs were changed by
+    the rewrite.
+</p>
+</li>
+</ul></div>
+</div>
+<div class="sect2">
+<h3 id="_first_changed_commits">First Changed Commits</h3>
+<div class="paragraph"><p>The <code>$GIT_DIR/filter-repo/first-changed-commits</code> contains a list of the
+first commit(s) changed by the filtering operation.  These are the commits
+that got rewritten and which had no parents that were also rewritten.</p></div>
+<div class="paragraph"><p>So, for example if you had commits
+  A1-B1-C1-D1-E1
+before running git-filter-repo, and afterward you had commits
+  A1-B2-C2-D2-E2
+then the First Changed Commits file would contain just one line, which
+would be the hash of B2.</p></div>
+<div class="paragraph"><p>In most cases, there will only be one commit listed, but if you had
+multiple root commits or a non-linear history where the commits on
+those diverging histories were the first ones modified, then there
+could be multiple first changed commits and they will each be listed
+on separate lines.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_already_ran">Already Ran</h3>
+<div class="paragraph"><p>The <code>$GIT_DIR/filter-repo/already_ran</code> file contains a file recording that
+git-filter-repo has been run.  When this file is present, future runs will
+be treated as an extension of the previous filtering operation.</p></div>
+<div class="paragraph"><p>Concretely, this means:
+  * The "Fresh Clone" check is bypassed</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><code>This is done because past runs would cause the repository to no longer
+look like a fresh clone, and thus fail the fresh clone check, but doing
+filtering via multiple invocations of git-filter-repo is an intended
+and support usecase.  You already passed or bypassed the "Fresh Clone"
+check on your initial run.</code></pre>
+</div></div>
+<div class="ulist"><ul>
+<li>
+<p>
+The commit-map and ref-map files above will be updated rather than
+    simply rewritten.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>In other words, if the first filter-repo invocation rewrote commit
+A to commit B, and the second filter-repo invocation rewrite
+commit B to commit C, then the second run would have an "A C"
+entry rather than a "B C" entry for the changed commit.</code></pre>
+</div></div>
+</li>
+<li>
+<p>
+The first changed commit(s) (reported When using the
+    --sensitive-data-removal option) will be the first original commit
+    modified, not the first intermediate commit modified.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><code>In more detail, if the repository original had the following commits:
+   A1-B1-C1-D1-E1
+and the first invocation of filter-repo changed this to
+   A1-B1-C2-D2-E2
+then the first run would report "C1" as the first changed commit.  If
+a second filter-repo run further changed this to
+   A1-B1-C2-D3-E3
+then it would report "C1" as the first changed commit, not "D2",
+because it is comparing to the original commits rather than the
+intermediate ones.</code></pre>
+</div></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>However, if the already_ran file exists but is older than 1 day when they
+invoke git-filter-repo, the user will be prompted for whether the new run
+should be considered a continuation of the previous run.  If they do not
+answer in the affirmative, then the above three bullets will not apply.
+This prompt exists because users might do a history rewrite in a repository,
+forget about it and leave the $GIT_DIR/filter-repo directory around, and
+then some months or years later need to do another rewrite.  If commits
+have been made public and shared from the previous rewrite, then the next
+filter-repo run should not be considered a continuation of the previous
+filtering run.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_original_lfs_objects">Original LFS Objects</h3>
+<div class="paragraph"><p>When running with the --sensitive-data-removal flag, and LFS is in use by the
+repository, the <code>$GIT_DIR/filter-repo/original_lfs_objects</code> contains a list of
+LFS objects referenced by the repository before the rewrite, in sorted order.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_orphaned_lfs_objects">Orphaned LFS Objects</h3>
+<div class="paragraph"><p>When running with the --sensitive-data-removal flag, and LFS is in use by the
+repository, the <code>$GIT_DIR/filter-repo/orphaned_lfs_objects</code> contains a list of
+LFS objects that used to be referenced by the repository but no longer are after
+git-filter-repo has run.  Objects appear in sorted order.</p></div>
 </div>
 </div>
 </div>
@@ -1581,68 +1799,63 @@ history rewrite are roughly as follows:</p></div>
 <div class="olist arabic"><ol class="arabic">
 <li>
 <p>
-Create a clone of your repository (if you created special refs outside
-   of refs/heads/ or refs/tags/, make sure to fetch those too).  You may
-   pass <code>--bare</code> or <code>--mirror</code> to <code>git clone</code>, if you prefer.  You should
-   pass <code>--no-local</code> if the repository you are cloning from is on the local
+Create a clone of your repository.  You may pass <code>--bare</code> or
+   <code>--mirror</code> to <code>git clone</code>, if you prefer.  You should pass
+   <code>--no-local</code> if the repository you are cloning from is on the local
    filesystem.  Avoid other flags; some might confuse the fresh clone
-   check, and others could cause parts of the data to be missing that are
-   needed for the rewrite.
+   check, and others could cause parts of the data to be missing that
+   are needed for the rewrite.
 </p>
 </li>
 <li>
 <p>
 (Optional) Run <code>git filter-repo --analyze</code>.  This will create a
-   directory of reports mentioning renames that have occurred in your
-   repo and also listing sizes of objects aggregated by
-   path/directory/extension/blob-id; this information may be useful in
+   directory of reports mentioning multiple things: (a) paths that have
+   existed over time in your repo, (b) renames that have occurred in
+   your repo and (c) sizes of objects aggregated by
+   path/directory/extension/blob-id.  This information may be useful in
    choosing how to filter your repo.  It can also be useful to re-run
    --analyze after filtering to verify the changes look correct.
 </p>
 </li>
 <li>
 <p>
-Run filter-repo with your desired filtering options.  Many examples
-   are given below.  For more complex cases, note that doing the
-   filtering in multiple steps (by running multiple filter-repo
-   invocations in a sequence) is supported.  If anything goes wrong here,
-   simply delete your clone and restart.
-</p>
-</li>
-<li>
-<p>
-Push your new repository to its new home (note that
-   refs/remotes/origin/* will have been moved to refs/heads/* as the
-   first part of filter-repo, so you can just deal with normal branches
-   instead of remote tracking branches).  While you can force push this
-   to the same URL you cloned from, there are good reasons to consider
-   pushing to a different location instead:
+Before rewriting the history of your local copy with git-filter-repo,
+   determine where you will push the rewritten history to when you are
+   done.  In the special case that you are trying to remove sensitive
+   data from an existing repository, you will want to push it back where
+   you cloned from, as well as clean up all other clones/copies of the
+   repo.  If you will be pushing back to the repository you cloned from,
+   you will want to use the --sensitive-data-removal option and see the
+   Sensitive Data Removal section below.  In most cases not dealing with
+   sensitive data removal, you will want to push to a new repo, because:
 </p>
 <div class="ulist"><ul>
 <li>
 <p>
-People who cloned from the original repo will have old history.
-     When they fetch the new history you force pushed up, unless they
-     do a <code>git reset --hard @{u}</code> on their branches or rebase their
-     local work, git will think they have hundreds or thousands of
-     commits with very similar commit messages as what exist upstream
-     (but which include files you wanted excised from history), and
-     allow the user to merge the two histories, resulting in what
-     looks like two copies of each commit.  If they then push this
-     history back up, then everyone now has history with two copies of
-     each commit and the bad files have returned.  You&#8217;re more likely
-     to succeed in forcing people to get rid of the old history if
-     they have to clone a new URL.
+Even after you rewrite history and push it back, other people who
+     previously cloned from the original repo will have the old history.
+     If they simply run <code>git pull &amp;&amp; git push</code>, it will merge the
+     unrewritten history with the new, resulting in what looks like two
+     copies of each commit involved in your rewrite&#8201;&#8212;&#8201;a new copy of
+     each commit which has the cleanups you made, and an old copy of
+     each commit that has not been cleaned up&#8201;&#8212;&#8201;being merged together.
+     That means everything you carefully worked to remove from the
+     repository has been pushed back.  You&#8217;re more likely to succeed in
+     making sure they don&#8217;t re-push the unclean data if you just give
+     them a new repository URL and tell them to reclone.
 </p>
 </li>
 <li>
 <p>
 Rewriting history will rewrite tags; those who have already
-     downloaded tags will not get the updated tags by default (see the
-     "On Re-tagging" section of <a href="git-tag.html">git-tag(1)</a>).  Every user
-     trying to use an existing clone will have to forcibly delete all
-     tags and re-fetch them; it may be easier for them to just
-     re-clone, which they are more likely to do with a new clone URL.
+     downloaded tags will not get the updated tags even if they specify
+     <code>--tags</code> to <code>git fetch</code> or <code>git pull</code> (see the "On Re-tagging"
+     section of <a href="git-tag.html">git-tag(1)</a>).  Every user trying to use an
+     existing clone will have to forcibly delete all tags they already
+     downloaded <em>before</em> re-fetching them; it may be easier for them to
+     just re-clone, which they are more likely to do with a new clone
+     URL.
 </p>
 </li>
 <li>
@@ -1661,56 +1874,34 @@ Rewriting history may delete some refs (e.g. branches that only
 </li>
 <li>
 <p>
-The server may not allow you to force push over some refs.
-     For example, code review systems may have special ref
-     namespaces (e.g. refs/changes/, refs/pull/,
-     refs/merge-requests/) that they have locked down.
+The server may not allow you to force push over some refs.  For
+     example, code review systems may have special ref namespaces
+     (e.g. refs/changes/, refs/pull/, refs/merge-requests/) that they
+     have locked down, and you&#8217;ll need to somehow prevent users from
+     merging those locked-down (and thus not cleaned up) histories
+     with your cleaned-up history.  Every software code review system
+     handles this differently (see the sensitive data removal section
+     for some links).
 </p>
 </li>
 </ul></div>
 </li>
 <li>
 <p>
-If you still want to push your rewritten history back to the
-   original url despite my warnings above, you&#8217;ll have to manage it
-   very carefully:
-</p>
-<div class="ulist"><ul>
-<li>
-<p>
-git-filter-repo deletes the "origin" remote to help avoid people
-     accidentally repushing to the same repository, so you&#8217;ll need to
-     remind git what origin&#8217;s url was.  You&#8217;ll have to look up the
-     command for that.
+Run filter-repo with your desired filtering options.  Many examples
+   are given in the <a href="#EXAMPLES">[EXAMPLES]</a> section.  For more complex cases, note
+   that doing the filtering in multiple steps (by running multiple
+   filter-repo invocations in a sequence) is supported.  If anything
+   goes wrong here, simply delete your clone and restart.
 </p>
 </li>
 <li>
 <p>
-You&#8217;ll need to carefully synchronize with <strong>everyone</strong> who has
-     cloned the repository, and will also need to carefully
-     synchronize with <strong>everything</strong> (e.g. CI systems) that has cloned
-     it.  Every single clone will either need to be thrown away and
-     re-cloned, or need to take all the steps outlined in item 4 as
-     well as follow the necessary steps from "RECOVERING FROM UPSTREAM
-     REBASE" section of <a href="git-rebase.html">git-rebase(1)</a>.  If you miss fixing any
-     clones, you&#8217;ll risk mixing old and new history and end up with an
-     even worse mess to clean up.
+Push your new repository to its new home (note that
+   refs/remotes/origin/* will have been moved to refs/heads/* as the
+   first part of filter-repo, so you can just deal with normal branches
+   instead of remote tracking branches).
 </p>
-</li>
-<li>
-<p>
-Finally, you&#8217;ll need to consult any documentation from your
-     hosting provider about how to remove any server-side references
-     to the old commits (example:
-     <a href="https://docs.gitlab.com/ee/user/project/repository/reducing_the_repo_size_using_git.html">GitLab&#8217;s
-     excellent docs on reducing repository size</a>, or just the warning
-     box that references "GitHub support" from
-     <a href="https://docs.github.com/en/github/authenticating-to-github/removing-sensitive-data-from-a-repository">GitHub&#8217;s
-     otherwise dangerously out-of-date docs on removing sensitive
-     data</a>).
-</p>
-</li>
-</ul></div>
 </li>
 <li>
 <p>
@@ -1719,40 +1910,384 @@ Finally, you&#8217;ll need to consult any documentation from your
 <div class="ulist"><ul>
 <li>
 <p>
-filter-repo by default creates replace refs (see
-     <a href="git-replace.html">git-replace(1)</a>) for each rewritten commit ID, allowing
-     you to use old (unabbreviated) commit hashes in the git command
-     line to refer to the newly rewritten commits.  If you want to use
-     these replace refs, manually push them to the relevant clone URL
-     and tell users to manually fetch them (e.g. by adjusting their
-     fetch refspec, <code>git config --add remote.origin.fetch
-     +refs/replace/*:refs/replace/*</code>).  Sadly, replace refs are not
-     yet widely understood; projects like jgit and libgit2 do not
-     support them and existing repository managers (e.g. Gerrit,
-     GitHub, GitLab) do not yet understand replace refs.  Thus one
-     can&#8217;t use old commit hashes within the UI of these other systems.
-     This may change in the future, but replace refs at least help
-     users locally within the git command line interface.  Also, be
-     aware that commit-graphs are excessively cautious around replace
-     refs and just turn off entirely if any are present, so after
-     enough time has passed that old commit IDs become less relevant,
-     users may want to locally delete the replace refs to regain the
-     speedups from commit-graphs.
-</p>
-</li>
-<li>
-<p>
-If you have a central repo, you may want to prevent people
-     from pushing old commit IDs, in order to avoid mixing old
-     and new history.  Every repository manager does this
-     differently, some provide specialized commands
-     (e.g. <a href="https://gerrit-review.googlesource.com/Documentation/cmd-ban-commit.html">https://gerrit-review.googlesource.com/Documentation/cmd-ban-commit.html</a>),
-     others require you to write hooks.
+filter-repo has a --replace-refs option to allow creating replace
+     refs (see <a href="git-replace.html">git-replace(1)</a>) for each rewritten commit ID,
+     allowing you to use old (unabbreviated) commit hashes in the git
+     command line to refer to the newly rewritten commits.  If you
+     want to use these replace refs, manually push them to the
+     relevant clone URL and tell users to manually fetch them (e.g. by
+     adjusting their fetch refspec, <code>git config --add
+     remote.origin.fetch +refs/replace/*:refs/replace/*</code>).  Sadly,
+     replace refs are not yet widely understood; projects like jgit
+     and libgit2 do not support them and existing repository managers
+     (e.g. Gerrit, GitHub, GitLab) do not yet understand replace refs.
+     Thus one can&#8217;t use old commit hashes within the UI of these other
+     systems.  This may change in the future, but replace refs at
+     least help users locally within the git command line interface.
+     Also, be aware that commit-graphs are excessively cautious around
+     replace refs and just turn off entirely if any are present, so
+     after enough time has passed that old commit IDs become less
+     relevant, users may want to locally delete the replace refs to
+     regain the speedups from commit-graphs.
 </p>
 </li>
 </ul></div>
 </li>
 </ol></div>
+<div class="sect2">
+<h3 id="_why_is_my_origin_removed">Why is my origin removed?</h3>
+<div class="paragraph"><p>When you rewrite history, all commit IDs (starting with the first one
+where changes are made) are modified.  Even if you think you didn&#8217;t
+change an intermediate commit, the fact that you changed any of its
+ancestors is also a change that counts and will cause a commit&#8217;s ID to
+change as well.  It is unfortunately all-too-easy for yourself or
+someone else to accidentally merge the old ugly history you were
+trying to rewrite with the new history, resulting in not only the old
+ugly history returning but getting you "two copies" of each commit
+(both an original commit and a cleaned-up alternative), and thus
+doubling the number of commits in your repository.  In short, you end
+up with an even bigger mess to clean up than you started with.</p></div>
+<div class="paragraph"><p>This happens frequently to people using <code>git filter-branch</code> or <code>BFG
+repo cleaner</code>, and can happen to folks using <code>git filter-repo</code> if they
+insist on pushing back to the original repo.  Example ways you can get
+such an even uglier history include:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+at the command line (of another clone of the same repo from before the
+    cleanup): <code>git pull &amp;&amp; git push</code>
+</p>
+</li>
+<li>
+<p>
+in a software forge: "reopen old Pull-Request/Merge-Request/Code-Review
+    and hit the merge/submit button"
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Removing the <code>origin</code> remote and suggesting people push to a new repo
+(and ensuring they tell others to clone the new repo) is usually a
+good forcing function to avoid these problems.  But, if people really
+want to push to the original repository despite these warnings, it is
+trivial to do so; simply run:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>git remote add origin $ORIGINAL_CLONE_URL</code>
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>and then you can push (e.g. <code>git push --force --branches --tags
+--prune</code>).  Since removing the origin url is such a cheap way to
+potentially prevent big messes, and it&#8217;s so easy to work around for
+those that really do want to push back over the original history,
+removing the origin url is a great safety measure that I employ.</p></div>
+<div class="paragraph"><p>One final warning if you really want to push back to the original repo:
+see the next section on sensitive data removals.  Those are the steps
+needed when pushing back to the original repo; they are so involved that
+I assume they are only worth it when sensitive data is involved, but you
+can choose to follow them for other kinds of rewrites too.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_sensitive_data_removals">Sensitive Data Removals</h3>
+<div class="paragraph"><p>Sensitive data removals are a specialized type of history rewrite.
+While it is always very problematic to mix the cleaned-up history with
+the non-cleaned-up history, for sensitive data removals it is also bad
+to allow others to continue to view/clone/fetch the non-cleaned-up
+history at all; users often need to try to expunge the old history as
+well.</p></div>
+<div class="paragraph"><p>Note that if the sensitive data under consideration is a
+token/password/credential/secret (as is often the case), then it is
+important that you revoke and rotate that credential first.  Once the
+credential is revoked or rotated, it can no longer be used for access.
+Revoking/rotating may resolve your problem without resorting to the
+heavy-handed action of rewriting and purging history.</p></div>
+<div class="paragraph"><p>For sensitive data removal history rewrites, there are three high-level
+steps:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Rewrite the repository locally, using git-filter-repo
+</p>
+</li>
+<li>
+<p>
+Make sure other copies are cleaned up, including:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+the server you cloned from
+</p>
+</li>
+<li>
+<p>
+other clones that exist, such as ones your colleagues made
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Prevent repeats and avoid future sensitive data spills
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Each will be discussed in greater detail below.</p></div>
+<div class="paragraph"><p>One important thing to note, though, is that others working on the same
+repository should be instructed to stop while you do the cleanup; if
+they continue development during your cleanup, you&#8217;ll likely be forced to
+either discard their changes or start over on your cleanup.</p></div>
+<div class="sect3">
+<h4 id="_rewrite_the_repository_locally_using_git_filter_repo">Rewrite the repository locally, using git-filter-repo</h4>
+<div class="paragraph"><p>The first step is to rewrite a copy of your repository locally using
+git-filter-repo.  The exact commands to run will differ based on where
+in your repository the sensitive data is found, but some general tips:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Use the --sensitive-data-removal flag.  It will provide additional
+    information useful for the other steps.
+</p>
+</li>
+<li>
+<p>
+If the sensitive data is the entirety of one or more files, and no
+    version of those files from history needs to be kept in your
+    repository, the --invert-paths flag together with one or more --path
+    arguments may come in handy.
+</p>
+</li>
+<li>
+<p>
+If the sensitive data is just a string found within one or more
+    files and you want to replace that sensitive string with something
+    else while leaving the rest of the file(s) intact, the --replace-text
+    option may come in handy.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>After rewriting the history locally, make sure to inspect it to ensure the
+sensitive data has been removed.  Some commands that might be handy for
+checking are:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git log --all --name-status -- ${PROBLEMATIC_FILE1} ${PROBLEMATIC_FILE2}</code></pre>
+</div></div>
+<div class="paragraph"><p>or</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git log -S"${PROBLEMATIC_STRING}" --all -p --</code></pre>
+</div></div>
+<div class="paragraph"><p>If either of these commands turn up more sensitive data, then run additional
+git-filter-repo commands to clean up the necessary data before proceeding.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_make_sure_other_copies_are_cleaned_up_primary_server">Make sure other copies are cleaned up: primary server</h4>
+<div class="paragraph"><p>Cleaning up the repository you cloned from requires force pushing your
+rewritten history over the original.  You need to force push all refs,
+not just your current branch.  You can use the following command to do so
+(read the bulleted list right after this command before running it):</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git push --force --mirror origin</code></pre>
+</div></div>
+<div class="paragraph"><p>Several comments on this command:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+If any of your colleagues have pushed any changes since you
+    started, this force push command will discard their changes.
+</p>
+</li>
+<li>
+<p>
+This force push is likely to fail to push some refs, since most
+    forges (Gerrit, GitHub, GitLab, etc.) prevent you from updating
+    some refs (e.g. <code>refs/changes/*</code>, <code>refs/pull/*</code>,
+    <code>refs/merge-requests/*</code>).  You will need to follow the directions
+    from those forges to get the remaining refs updated or deleted,
+    and a garbage collection to be triggered on their end.  Some
+    examples:
+    (<a href="https://docs.gitlab.com/ee/user/project/repository/reducing_the_repo_size_using_git.html">GitLab&#8217;s
+    docs on reducing repository size</a>, or
+    <a href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github">the
+    "Fully removing the data from GitHub" section of GitHub&#8217;s docs</a>).
+</p>
+</li>
+<li>
+<p>
+If you passed the <code>--no-fetch</code> option to git-filter-repo (or
+    implied it with another option), you will either need to (1) drop
+    the <code>--mirror</code> option and figure out which refs or refspecs to
+    push on your own, or (2) use the <code>--mirror</code> option and risk
+    deleting any refs you didn&#8217;t fetch.  Further, if you lacked some
+    refs the server had which included the sensitive data in their
+    history, then your only options at this point to actually clean up
+    the sensitive data from the server are to either redo your rewrite
+    from scratch (and make sure to get the relevant refs included this
+    time) or delete those refs on the server.
+</p>
+</li>
+<li>
+<p>
+Yes, I know that --mirror implies --force and is unnecessary.  I
+    included --force anyway as a visual reminder to readers that this
+    is going to overwrite changes on the server.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Also, if any LFS objects were orphaned by your rewrite, those objects
+likely contain sensitive data and need to be deleted/purged from the LFS
+server.  You&#8217;ll have to ask the maintainer of the LFS server you are
+using for how to delete/purge those on the server.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_make_sure_other_copies_are_cleaned_up_clones_of_colleagues">Make sure other copies are cleaned up: clones of colleagues</h4>
+<div class="paragraph"><p>After you have cleaned up the server, the easiest way to clean up other
+clones is to make everyone delete their existing clones and reclone.</p></div>
+<div class="paragraph"><p>If that isn&#8217;t an option, then you will need to proceed carefully because
+a simple <code>git pull &amp;&amp; git push</code> from any other clone will recontaminate
+the main repository and make the mess even harder to clean up.  To avoid
+this, before pushing from any other clone, you&#8217;ll need to have them clean
+up their copy, as detailed below.</p></div>
+<div class="paragraph"><p>First, though, let me note that you should <strong>not</strong> have other developers
+try to cleanup their clone by running the same <code>git-filter-repo</code>
+commands that you ran.  While that sometimes may happen to work, it is
+not reliable in general.  Running the same <code>git-filter-repo</code> commands,
+even if identical, can result in them getting new hashes for commits
+that are different than your new hashes, and you&#8217;ll end up with a mess
+involving two or more copies of every commit.</p></div>
+<div class="paragraph"><p>Instead developers with other clones of the repository should run
+through the following steps to clean up their copy if they are unwilling
+to discard their copy and reclone:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+delete all tags and run <code>git fetch --prune --tags</code>.  Running the
+    fetch command without deleting tags first will result in the old
+    tags being kept, which will keep the sensitive data.
+</p>
+</li>
+<li>
+<p>
+rebase any changes they have on any branch (or other ref) on top of
+    the new history.  See the "RECOVERING FROM UPSTREAM REBASE" section
+    of <a href="git-rebase.html">git-rebase(1)</a> (and in particular, "The hard case") for
+    instructions.
+</p>
+</li>
+<li>
+<p>
+run a few steps to clean out the pre-rebase history (note that the first
+    step drops all reflogs including all stash entries.  That&#8217;s a high cost,
+    but needed to clean up the sensitive data):
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+git reflog expire --expire=now --all
+</p>
+</li>
+<li>
+<p>
+git gc --prune=now
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
+<div class="paragraph"><p>Once these steps are complete, you also need to verify that the clone no
+longer contains any sensitive data (it is really easy to miss something,
+which puts you at risk of recontaminating other repositories with the
+sensitive data).  You can do so by running:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git cat-file -t ${HASH_OF_FIRST_CHANGED_COMMIT}</code></pre>
+</div></div>
+<div class="paragraph"><p>Where <code>${HASH_OF_FIRST_CHANGED_COMMIT}</code> was printed by git-filter-repo at
+the end of its run (if there was more than one "first changed commit",
+run this command multiple times, with each commit hash).  If this
+command returns a fatal error, then the commit has correctly been
+removed from this repository.  If it responds with "commit", then the
+object still exists and you need to re-delete tags, re-rebase all
+necessary branches/refs, and re-expire reflogs and redo the gc.  If you
+are curious about which branches or refs were the problematic ones
+holding on to <code>${HASH_OF_FIRST_CHANGED_COMMIT}</code>, then presuming you did
+the reflog expire and gc jobs above, the following command should help
+you find the problematic branches/refs:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git for-each-ref --contains ${HASH_OF_FIRST_CHANGED_COMMIT}</code></pre>
+</div></div>
+<div class="paragraph"><p>Also, remember, the cat-file command needs to come back with a fatal
+error for every <code>${HASH_OF_FIRST_CHANGED_COMMIT}</code> involved if you have
+more than one.</p></div>
+<div class="paragraph"><p>After this is all done, then if any LFS objects were orphaned by the
+rewrite (which again, you will be told if you use the
+--sensitive-data-removal option when you run git-filter-repo), then you
+also need to remove those LFS objects.  Look for them a couple
+directories under .git/lfs/objects/, and delete them.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_prevent_repeats_and_avoid_future_sensitive_data_spills">Prevent repeats and avoid future sensitive data spills</h4>
+<div class="paragraph"><p>There are several measures you can take to help avoid repeat problems.
+Not all may be applicable for your case, but the more that are, the more
+likely you can avoid problems.</p></div>
+<div class="paragraph"><p>For dealing with the existing sensitive data spill:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Since it is so easy to re-contaminate the repository you cloned from
+  (it merely takes a colleague to run <code>git pull &amp;&amp; git push</code> from their
+  clone that was created before your cleanup), take extra vigilance in
+  performing the clean ups steps above for other clones to ensure they
+  have all been cleaned up.
+</p>
+</li>
+<li>
+<p>
+If you have a central repository everyone pushes to, look into methods
+  to ban the First Changed Commit(s) from being (re-)pushed to your
+  repository.  Sadly, few repository managers currently have such a
+  built-in capability (see Gerrit&#8217;s ban-commit ability for one such
+  example at
+  <a href="https://gerrit-review.googlesource.com/Documentation/cmd-ban-commit.html">https://gerrit-review.googlesource.com/Documentation/cmd-ban-commit.html</a>),
+  but a few may allow you to write your own pre-receive hooks that
+  reject pushes containing these bad commits.  (Pro-tip for writing such
+  a pre-receive hook: use <code>git cat-file -t ${BAD_COMMIT}</code> as a cheap
+  check before checking if any revision range between <code>&lt;old-oid&gt;</code> and
+  <code>&lt;new-oid&gt;</code> contains <code>${BAD_COMMIT}</code>)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Steps to help avoid other future sensitive data spills:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+If sensitive data is likely to appear within certain filenames that
+  should not be tracked in git at all, then add those filenames to
+  .gitignore to reduce the risk that others accidentally add them.
+</p>
+</li>
+<li>
+<p>
+Avoid hardcoding secrets in code.  Use environment variables,
+  configuration management tools, or secrets management services like
+  Azure Key Vault, AWS Secrets Manager, or HashiCorp Vault to manage and
+  inject secrets at runtime.
+</p>
+</li>
+<li>
+<p>
+Create a pre-commit hook to check for sensitive data before it is
+  committed or pushed anywhere, or use a well-known tool in a pre-commit
+  hook like git-secrets or gitleaks.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -2108,7 +2643,7 @@ rewrite history to make it permanent:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><code>git replace $commit_A $commit_B
-git filter-repo --force</code></pre>
+git filter-repo --proceed</code></pre>
 </div></div>
 <div class="paragraph"><p>To create a new commit with the same contents as $commit_A except with
 different parent(s) and then replace $commit_A with the new commit,
@@ -2116,11 +2651,13 @@ and rewrite history to make it permanent:</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><code>git replace --graft $commit_A $new_parent_or_parents
-git filter-repo --force</code></pre>
+git filter-repo --proceed</code></pre>
 </div></div>
-<div class="paragraph"><p>The reason to specify --force is two-fold: filter-repo will error out
-if no arguments are specified, and the new graft commit would
-otherwise trigger the not-a-fresh-clone check.</p></div>
+<div class="paragraph"><p>The <code>--proceed</code> option is needed to avoid failing the "no arguments
+specified" check.  Note that older versions of git-filter-repo
+required <code>--force</code> to be passed after creating a graft to avoid
+triggering the not-a-fresh-clone check; that check has been modified
+to remove this overuse of <code>--force</code>.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_partial_history_rewrites">Partial history rewrites</h3>
@@ -2148,8 +2685,9 @@ are some API compatibility caveats associated with these callbacks
 that you should be aware of before using them; see the "API BACKWARD
 COMPATIBILITY CAVEAT" comment near the top of git-filter-repo source
 code.</p></div>
-<div class="paragraph"><p>All callback functions are of the same general format.  For a command line
-argument like</p></div>
+<div class="paragraph"><p>Most callback functions are of the same general format
+(--file-info-callback is an exception which will be noted later).  For
+a command line argument like</p></div>
 <div class="listingblock">
 <div class="content">
 <pre><code>--foo-callback 'BODY'</code></pre>
@@ -2188,7 +2726,8 @@ callbacks are:</p></div>
 --message-callback
 --name-callback
 --email-callback
---refname-callback</code></pre>
+--refname-callback
+--file-info-callback</code></pre>
 </div></div>
 <div class="paragraph"><p>in each you are expected to simply return a new value based on the one
 passed in.  For example,</p></div>
@@ -2245,10 +2784,103 @@ the file should be renamed.  An example:</p></div>
     return filename
   '</code></pre>
 </div></div>
-<div class="paragraph"><p>In contrast, the blob, reset, tag, and commit callbacks are not
-expected to return a value, but are instead expected to modify the
-object passed in.  Major fields for these objects are (subject to API
-backward compatibility caveats mentioned previously):</p></div>
+<div class="paragraph"><p>The file-info callback is more involved.  It is designed to be used in
+cases where filtering depends on both filename and contents (and maybe
+mode).  It is called for file changes other than deletions (since
+deletions have no file contents to operate on).  The file info
+callback takes four parameters (filename, mode, blob_id, and value),
+and expects three to be returned (filename, mode, blob_id).  The
+filename is handled similar to the filename callback; it can be used
+to rename the file (or set to None to drop the change).  The mode is a
+simple bytestring (b"100644" for regular non-executable files,
+b"100755" for executable files/scripts, b"120000" for symlinks, and
+b"160000" for submodules).  The blob_id is most useful in conjunction
+with the value parameter.  The value parameter is an instance of a
+class that has the following functions
+  value.get_contents_by_identifier(blob_id) &#8594; contents (bytestring)
+  value.get_size_by_identifier(blob_id) &#8594; size_of_blob (int)
+  value.insert_file_with_contents(contents) &#8594; blob_id
+  value.is_binary(contents) &#8594; bool
+  value.apply_replace_text(contents) &#8594; new_contents (bytestring)
+and has the following member data you can write to
+  value.data (dict)
+These functions allow you to get the contents of the file, or its
+size, create a new file in the stream whose blob_id you can return,
+check whether some given contents are binary (using the heuristic from
+the grep(1) command), and apply the replacement rules from --replace-text
+(note that --file-info-callback makes the changes from --replace-text not
+auto-apply).  You could use this for example to only apply the changes
+from --replace-text to certain file types and simultaneously rename the
+files it applies the changes to:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git-filter-repo --file-info-callback '
+  if not filename.endswith(b".config"):
+    # Make no changes to the file; return as-is
+    return (filename, mode, blob_id)
+
+  new_filename = filename[0:-7] + b".cfg"
+
+  contents = value.get_contents_by_identifier(blob_id)
+  new_contents = value.apply_replace_text(contents)
+  new_blob_id = value.insert_file_with_contents(new_contents)
+
+  return (new_filename, mode, new_blob_id)</code></pre>
+</div></div>
+<div class="paragraph"><p>Note that if history has multiple revisions with the same file
+(e.g. it was cherry-picked to multiple branches or there were a number
+of reverts), then the --file-info-callback will be called multiple
+times.  If you want to avoid processing the same file multiple times,
+then you can stash transformation results in the value.data dict.
+For, example, we could modify the above example to make it only apply
+transformations on blob_ids we have not seen before:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git-filter-repo --file-info-callback '
+  if not filename.endswith(b".config"):
+    # Make no changes to the file; return as-is
+    return (filename, mode, blob_id)
+
+  new_filename = filename[0:-7] + b".cfg"
+
+  if blob_id in value.data:
+    return (new_filename, mode, value.data[blob_id])
+
+  contents = value.get_contents_by_identifier(blob_id)
+  new_contents = value.apply_replace_text(contents)
+  new_blob_id = value.insert_file_with_contents(new_contents)
+  value.data[blob_id] = new_blob_id
+
+  return (new_filename, mode, new_blob_id)</code></pre>
+</div></div>
+<div class="paragraph"><p>An alternative example for the --file-info-callback is to make all
+.sh files executable and add an extra trailing newline to the .sh
+files:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git-filter-repo --file-info-callback '
+  if not filename.endswith(b".sh"):
+    # Make no changes to the file; return as-is
+    return (filename, mode, blob_id)
+
+  # There are only 4 valid modes in git:
+  #   - 100644, for regular non-executable files
+  #   - 100755, for executable files/scripts
+  #   - 120000, for symlinks
+  #   - 160000, for submodules
+  new_mode = b"100755"
+
+  contents = value.get_contents_by_identifier(blob_id)
+  new_contents = contents + b"\n"
+  new_blob_id = value.insert_file_with_contents(new_contents)
+
+  return (filename, new_mode, new_blob_id)</code></pre>
+</div></div>
+<div class="paragraph"><p>In contrast to the previous callback types, the blob, reset, tag, and
+commit callbacks are not expected to return a value, but are instead
+expected to modify the object passed in.  Major fields for these
+objects are (subject to API backward compatibility caveats mentioned
+previously):</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -2709,7 +3341,7 @@ I assume that people use filter-repo for one-shot conversions, not
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2022-10-04 21:51:55 PDT
+ 2024-11-22 15:06:41 PST
 </div>
 </div>
 </body>
