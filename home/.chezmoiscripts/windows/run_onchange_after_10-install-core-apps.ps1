@@ -96,6 +96,9 @@ $apps = @(
     # so I have no idea.
     # Include it in case that changes.
     [WinGetItem] 'Microsoft.WindowsTerminal'
+
+    # These I just want from WinGet, full stop
+    [WinGetItem] 'Git.Git'
 )
 
 $installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
