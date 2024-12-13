@@ -69,6 +69,6 @@ if ($storeAppsToInstall)
     # MSCRAP: Microsoft.WinGet.Client\Install-WinGetPackage 1.10.90 _still_ doesn't honor `-WhatIf`.
     if ($PSCmdlet.ShouldProcess("apps: $($storeAppsToInstall)", "Install WinGet packages"))
     {
-        $appsToInstall | Install-WinGetPackage
+        $appsToInstall | Install-WinGetPackage -ErrorAction Stop
     }
 }
