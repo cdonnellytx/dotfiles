@@ -4,10 +4,11 @@
     "**/*.omp.json": "jsonc",
     "**/.magic.d/**/*": "properties",
     "config": "properties",
-    "*.toml.tmpl": "toml",
     ".chezmoiignore": "ignore",
-    ".chezmoiignore.tmpl": "gotmpl",
-    "*.cmd.tmpl": "bat"
+    "*.tmpl": "gotmpl",
+    "*.cmd.tmpl": "bat",
+    "*.ps1.tmpl": "powershell",
+    "*.toml.tmpl": "toml"
   },
   "gopls": {
     // GCRAP: For some stupid reason gopls does not default to syntax highlighting being on.
