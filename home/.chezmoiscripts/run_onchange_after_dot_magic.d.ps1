@@ -44,8 +44,9 @@ function Get-FileCommand
     }
     catch
     {
-        if ($IsWindows -and ($wsl = Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1))
+        if ($IsWindows -and ($wsl = Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1) -and (& $wsl --status) -and $?)
         {
+            
             if (& $wsl command -v file)
             {
                 return { wsl file ($args | wslpath) }

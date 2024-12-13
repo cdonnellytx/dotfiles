@@ -40,4 +40,7 @@ function Confirm-PSResourceRepositoryTrusted
     }
 }
 
+#
+# Trust the main repo.
+#
 Confirm-PSResourceRepositoryTrusted -Name 'PSGallery'
