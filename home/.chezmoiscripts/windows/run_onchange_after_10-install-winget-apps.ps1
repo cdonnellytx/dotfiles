@@ -90,6 +90,12 @@ $apps = @(
         Id = 'Mozilla.Firefox'
         Scope = 'System'
     }
+
+    # There's some reason I switched from installing the Terminal from the Store, but I can't recall why.
+    # Moreover, it looks like it's actually double installed now though, and get installed by Windows connecting OneDrive?,
+    # so I have no idea.
+    # Include it in case that changes.
+    [WinGetItem] 'Microsoft.WindowsTerminal'
 )
 
 $installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
