@@ -83,29 +83,31 @@ function Write-Header
     )
 
     # NOTE: we don't have new-text.  Write ANSI directly
-    $msg = "`e[97m${Object}`e[0;0m"
-
-    Write-Information -MessageData $msg
+    Write-Host "`e[97m${Object}`e[0;0m"
 }
 
-function Write-Operation
-{
-    param
-    (
-        $Object
-    )
-
-    Write-Information -MessageData $Object
-}
-
-function Write-Result
+function Enter-Operation
 {
     [CmdletBinding()]
     param
     (
-        [Parameter(Position = 0, Mandatory, ParameterSetName = 'Object')]
-        [ValidateNotNullOrEmpty()]
-        $Object,
+        [Parameter(Position = 0, Mandatory)]
+        [string] $Name
+    )
+
+    Write-Host -NoNewline ("{0,-60}" -f "${Name}`u{2026}")
+}
+
+$okResult     = "[  `e[32mOK`e[0m  ]"
+$failedResult = "[`e[31mFAILED`e[0m]"
+
+function Exit-Operation
+{
+    [CmdletBinding(DefaultParameterSetName = 'OK')]
+    param
+    (
+        [Parameter(Position = 0, ParameterSetName = 'Object')]
+        $InputObject,
 
         [Parameter(Mandatory, ParameterSetName = 'Error')]
         [Alias('Error')]
@@ -117,32 +119,33 @@ function Write-Result
 
     $msg = switch ($PSCmdlet.ParameterSetName)
     {
+        'OK' { $okResult }
         'Object'
         {
-            Out-String -InputObject $Object
+            '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject)
         }
         'Error'
         {
             if ($Err)
             {
                 Write-Error $Err
-                return 'FAILED'
+                return $failedResult
             }
             else
             {
-                return 'OK'
+                return $okResult
             }
         }
         'LastExitCode'
         {
             switch ($LastExitCode)
             {
-                0 { "OK" }
-                default { "FAILED" }
+                0 { return $okResult }
+                default { return $failedResult }
             }
         }
     }
 
-    Write-Information -MessageData "------------> ${msg}"
+    Write-Output $msg
 }
 

@@ -20,22 +20,15 @@ function Confirm-PSResourceRepositoryTrusted
     process
     {
         Get-PSResourceRepository -Name:$Name | ForEach-Object {
-            Write-Operation "Trusting $($_.Name)..."
+            Enter-Operation "Trusting $($_.Name)"
             if ($_.Trusted)
             {
-                Write-Result "OK (already trusted)"
+                Exit-Operation "already trusted"
                 return
             }
 
             $_ | Set-PSResourceRepository -Trusted -WhatIf:$WhatIfPreference -ErrorVariable err
-            if ($err)
-            {
-                Write-Result -Err:$err
-            }
-            else
-            {
-                Write-Result "OK"
-            }
+            Exit-Operation -Err:$err
         }
     }
 }

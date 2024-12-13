@@ -8,8 +8,9 @@
     FunctionsToExport = @(
         'Write-Progress',
         'Write-Header',
-        'Write-Operation',
-        'Write-Result'
+        'Enter-Operation',
+        'Stop-Operation',
+        'Exit-Operation'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

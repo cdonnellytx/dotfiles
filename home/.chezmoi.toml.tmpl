@@ -1,10 +1,24 @@
 {{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+{{- $work := false -}}{{/* true if this machine is a work machine */}}
+{{- $personal := false -}}{{/* true if this machine is a personal machine */}}
 
-# vim: ft=toml :
+{{- if hasPrefix "CAI-" .chezmoi.hostname -}}
+{{-     $work = true -}}
+{{- else -}}
+{{-     $personal = true -}}
+{{- end -}}
+
+{{- $email := "" -}}
+{{- if $work -}}
+{{-     $email = print "chris.donnelly@" "coxautoinc.com" -}}
+{{- else -}}
+{{-     $email = print "cdonnelly@" "69bytes.com" -}}
+{{- end -}}
+
 # PowerShell: use Core
 [interpreters.ps1]
     command = "pwsh"
-    args = ["-NoLogo"]
+    args = ["-NoLogo", "-NoProfile"]
 
 [diff]
 {{- if $programs.delta }}
@@ -17,3 +31,8 @@
 
 [env]
     PSModulePath = {{ joinPath .chezmoi.workingTree "lib/modules"  | toToml }}
+
+[data]
+    email = {{ $email | toToml }}
+    personal = {{ $personal | toToml }}
+    work = {{ $work | toToml }}
