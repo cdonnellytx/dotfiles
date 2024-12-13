@@ -5,7 +5,6 @@
     "**/.magic.d/**/*": "properties",
     "config": "properties",
     ".chezmoiignore": "ignore",
-    "*.tmpl": "gotmpl",
     "*.cmd.tmpl": "bat",
     "*.ps1.tmpl": "powershell",
     "*.toml.tmpl": "toml"
