@@ -21,7 +21,7 @@ class MSStoreItem
     # A name for documentation purposes.  Not WinGetPackage name.
     hidden [string] $Description
 
-    # An alternate WinGetPackage.ID from source= if known.
+    # An alternate WinGetPackage.ID from source, if known.
     hidden [string] $AlternateId
 
     MSStoreItem() {}
