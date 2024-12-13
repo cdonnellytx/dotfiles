@@ -1,0 +1,20 @@
+{{- /* Initialize variables for use in this file */ -}}
+{{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+{{- $homeConfig := joinPath .chezmoi.homeDir ".gitconfig" -}}
+{{- $profile := "" -}}
+{{- if hasPrefix "CAI-" .chezmoi.hostname -}}
+{{-   $profile = "cai" -}}
+{{- else -}}
+{{-   $profile = "home" -}}
+{{- end -}}
+[include]
+{{- if (stat $homeConfig) }}
+    path={{ $homeConfig | quote }}
+{{- end }}
+    path="config.d/common.conf"
+    path="config.d/colors.conf"
+{{- if $programs.delta }}
+    path="config.d/tools.delta.conf"
+{{- end }}
+    path="config.d/profiles/{{ $profile }}.conf"
+    path="config.d/os.{{ .chezmoi.os }}.conf"

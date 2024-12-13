@@ -1,0 +1,15 @@
+%packager       Chris R. Donnelly
+%distribution   69bytes.com
+%vendor         69bytes.com
+%_signature     gpg
+%_gpg_name      Chris R. Donnelly
+
+#%_topdir        /software/centos
+#%_tmppath       /software/tmp/rpm
+
+#%_rpmtopdir    %{_topdir}/%{name}
+#%_builddir     %{_tmppath}/BUILD
+#%_rpmdir       %{_rpmtopdir}
+#%_sourcedir    %{_rpmtopdir}
+#%_specdir      %{_rpmtopdir}
+#%_srcrpmdir    %{_rpmtopdir}

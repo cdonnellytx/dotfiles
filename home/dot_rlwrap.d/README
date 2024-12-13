@@ -1,0 +1,100 @@
+Das ist rlwrap_extension Version 0.04 for Oracle 12.1.0.2
+Sie sollten folgende Dateien erhalten haben:
+
+sql+			-- ein Wrapper script für sqlplus
+asm+			-- ein Wrapper Script für asmcmd
+README			-- Diese Anleitung
+README.english  	-- Englische Anleitung
+adrci			-- Schlüsselwortdatei für adrci
+asmcmd			-- Schlüsselwortdatei für asmcmd
+dgmgrl                  -- Schlüsselwortdatei für dgmgrl
+rman			-- Schlüsselwortdatei für Recovery Manager
+sqlplus.all		-- Schlüsselwortdatei für ALL_* Views
+sqlplus.cdb		-- Schlüsselwortdatei für CDB_* Views
+sqlplus.dba		-- Schlüsselwortdatei für DBA_* Views
+sqlplus.gvdollar	-- Schlüsselwortdatei für GV$* Views
+sqlplus.init		-- Schlüsselwortdatei für dokumentierte Instanzparameter
+sqlplus._init		-- Schlüsselwortdatei für undokumentierte Instanzparameter
+sqlplus.packages        -- Schlüsselwortdatei für alle anderen Packages
+sqlplus.rman		-- Schlüsselwortdatei für RMAN Views in der Katalog DB
+sqlplus			-- Schlüsselwortdatei für sqlplus allgemein
+sqlplus.tables		-- Schlüsselwortdatei für allgemeine Tabellen
+sqlplus.user		-- Schlüsselwortdatei für USER_* Views
+sqlplus.vdollar		-- Schlüsselwortdatei für V$* Views
+
+Alle Dateien sqlplus*, rman, adrci and asmcmd gehören ins Verzeichnis
+/usr/local/share/rlwrap/completions oder dorthin,wo rlwrap seine shared
+files installiert hat. Im Zweifelsfall ausprobieren oder RFTM. 
+
+sql+ and asm+ gehören nach /usr/local/bin oder sonstwo im Pfad.
+
+Das Script namens sql+ erledigt folgende Aufgaben:
+  Wenn man es ohne Parameter aufruft, versucht es
+
+rlwrap ... sqlplus / as sysdba 
+or
+rlwrap ... sqlplus / as sysasm
+
+abhängig davon, ob die Environmentvariable ORACLE_SID mit '+' beginnt,
+sonst übergibt es alle Parameter an sqlplus (mit rlwrap) weiter.
+
+sql+ macht Gebrauch von der case insensitive name completion, die rlwrap 
+seit der Version 0.24 anbietet und benutzt alle mitgelieferten Schlüsselwortdateien, 
+die mit sqlplus beginnen (mit Ausnahme von sqlplus.rman, das ist zu speziell)
+
+Alle Dateien dieses Pakets sind public domain - Mit Ausnahme des Scripts sql+
+sind es ohnehin nur händisch zusammengetragene Schlüsselworte, die sich leicht
+aus diversen Quellen reproduzieren lassen. 
+
+Änderungen:
+===========
+12c:
+0.04
+ - check auf $ORACLE_HOME in sql+ und asm+
+ - sqlplus.functions wurde erweitert
+
+0.03
+- fehlende Views (CDB-, DBA-, ALl,- USER-) aus der 12.1.0.2 und fehlende Parameter ergänzt
+
+0.02
+- kleinere Korrekturen
+- Schlüsselwortdatei für dgmgrl
+
+0.01
+- Anpassungen an 12.1.0
+- File sqlplus.cdb (neu in V12)
+
+11g:
+0.05
+- Anpassungen an 11.2.0.3
+- Schlüsselwortdatei für asmcmd inklusive aller --parameter
+- neues Script asm+, um die Schlüsselwortdatei von asmcmd voll auszunutzen
+- Vereinfachung von sql+: keine Überprüfung mehr auf SYS oder nicht SYS (hat sich nicht bewährt),
+  dafür Unterscheidung zwischen ASM-connects (as sysasm) und DB-connects (as sysdba) wenn 
+  keine Aufrufparameter mitgegeben werden
+
+0.04
+- Fehlerhafte Einträge in sqlplus.user und sqlplus.all entfernt
+
+0.03
+- Differenz zwischen DICT und DBA_VIEWS eingefügt
+  36 Views namens DBA_* mehr in DBA_VIEWS! u.a DBA_SQL_PROFILES
+  Das selbe gilt für ALL_* und USER_* Views (64 resp 68 fehlende Namen)
+  Query:
+  SELECT view_name FROM dba_views WHERE view_name LIKE 'ALL\_%' ESCAPE '\'
+     MINUS
+  SELECT table_name FROM dict WHERE table_name LIKE 'ALL\_%' ESCAPE '\';
+
+0.02
+- Schlüsselwortdatei für ADRCI hinzugefügt
+
+0.01:
+- erste veröffentlichte Version
+
+HAFTUNGSAUSCHLUSS:
+Verwendung dieses Pakets auf eigene Verantwortung.
+Der Autor übernimmt keine wie auch immer geartete Haftung für etwaige Schäden,
+die durch die Anwendung dieser Dateien entstehen sollten. 
+
+Johannes Gritsch
+22.08.2007

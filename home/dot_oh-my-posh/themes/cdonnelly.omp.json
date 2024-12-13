@@ -1,0 +1,360 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 3,
+  "console_title_template": "{{if .Root }}\uD83D\uDEE1 {{end}}{{ .PWD }}",
+  "blocks": [
+    // Colors have to be chosen carefully because some terminals (like VS Code's builtin terminal)
+    // will choose different hues for WCAG compliance (it defaults to AA).
+    // These colors have not been chosen for this purpose as of yet.
+    // https://github.com/microsoft/vscode/issues/146406
+    // Also, the hues *do* differ slightly even with the related setting off.  Unsure why.
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        // Would use blocks to organize these, but there is a forced space after each block...
+        {
+          "type": "time",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#83769C",
+          "foreground": "#EEEEEE",
+          "properties": {
+            "cache_duration": "none",
+            "time_format": "15:04:05.000000"
+          }
+        },
+        //
+        // Cloud
+        //
+        {
+          "type": "aws",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#E15500",
+          "foreground": "#EEEEEE",
+          "template": " \uE7AD {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} ",
+          "properties": {
+            "cache_duration": "none",
+            "display_default": false
+          }
+        },
+        {
+          "type": "az",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#9ec3f0",
+          "foreground": "#000000",
+          "properties": {
+            "cache_duration": "none"
+          },
+          // U+EBD8 nf-cod-azure
+          "template": " \uEBD8 {{ .EnvironmentName }}"
+        },
+        //
+        // Languages
+        //
+        {
+          "type": "dotnet",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#7014E8",
+          "foreground": "#EEEEEE",
+          "template": " {{ if .Unsupported }}\uF071{{ else }}\uE77F{{ .Full }}{{if env \"ASPNETCORE_ENVIRONMENT\"}}:{{env \"ASPNETCORE_ENVIRONMENT\"}}{{else if env \"DOTNET_ENVIRONMENT\"}}:{{env \"DOTNET_ENVIRONMENT\"}}{{end}}{{ end }} ",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true // only works for .NET Core/5+
+          }
+        },
+        // Visual Studio environment variables
+        {
+          "type": "text",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#5E438F",
+          "foreground": "#EEEEEE",
+          "template": "{{if .Env.VisualStudioVersion}} \uE70C {{ .Env.VisualStudioVersion }} {{end}}",
+          "properties": {
+            "cache_duration": "none"
+          }
+        },
+        {
+          "type": "go",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#424242",
+          "foreground": "#7FD5EA",
+          // U+E724 nf-dev-go
+          "template": " \uE724 {{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }} {{ end }}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true,
+            "parse_mod_file": true
+          }
+        },
+        {
+          "type": "java",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#4063D8",
+          "foreground": "#EEEEEE",
+          "template": " \uE738 {{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }} {{ end }}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true
+          }
+        },
+        {
+          "type": "node",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#6CA35E",
+          "foreground": "#EEEEEE",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_package_manager": true,
+            "fetch_version": true,
+            // BUG (oh-my-posh 21.14.0-21.17.2+, vscode 1.90.x-1.91, nerd-fonts-CascadiaCode 3.2.1: default of U+F011B renders an extra space in VSCode terminal)
+            "yarn_icon": "\uE6A7"
+          },
+          "template": " \uE718{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }}{{ end }} {{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }}{{if env \"NODE_ENV\"}}:{{env \"NODE_ENV\"}}{{end}} {{end}}"
+        },
+        {
+          "type": "nx",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#1976d2",
+          "foreground": "#000000",
+          "template": " \uE753 {{ if .Full }}{{ .Full }} {{end}}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true
+          }
+        },
+        {
+          "type": "perl",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#4063D8",
+          "foreground": "#EEEEEE",
+          "template": " \uE769 {{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }} {{ end }}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_virtual_env": true
+          }
+        },
+        {
+          "type": "python",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#3776AB",
+          "foreground": "#EEEEEE",
+          "template": " \uE235 {{ if .Venv }}{{ .Venv }} {{ end }}{{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }} {{ end }}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_virtual_env": true
+          }
+        },
+        {
+          "type": "ruby",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#AE1401",
+          "foreground": "#EEEEEE",
+          "template": " \uE791 {{ if .Error }}{{ .Error }} {{ else if .Full }}{{ .Full }} {{ end }}",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true
+          }
+        },
+        {
+          "type": "terraform",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#844FBA",
+          "foreground": "#EEEEEE",
+          "template": " {{ .WorkspaceName }}{{if .Version}} {{.Version}}{{else if .Env.TVM_CURRENT_VERSION}} {{ .Env.TVM_CURRENT_VERSION }}{{end}} ",
+          "properties": {
+            "cache_duration": "none",
+            "fetch_version": true
+          }
+        },
+        //
+        // Source control
+        //
+        {
+          "type": "text",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#0077C2",
+          "foreground": "#ddd",
+          "template": "{{if .Env.GH_HOST}} \uF113 {{ .Env.GH_HOST }} {{end}}",
+          "properties": {
+            "cache_duration": "none"
+          }
+        },
+        {
+          "type": "text",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#2686C2",
+          "foreground": "#ddd",
+          "template": "{{if .Env.GH_REPO}} \uE5FD {{ .Env.GH_REPO }} {{end}}",
+          "properties": {
+            "cache_duration": "none"
+          }
+        },
+        //
+        // HTTP/HTTPS proxy
+        //
+        {
+          "type": "text",
+          "style": "powerline",
+          "powerline_symbol": "\uE0B0",
+          "background": "#1f7d30",
+          "foreground": "#ddd",
+          "template": "{{if or .Env.http_proxy .Env.https_proxy }}{{ if eq .Env.http_proxy .Env.https_proxy }} \uD83D\uDD10\uD83D\uDD13 {{ .Env.https_proxy }} {{ else }}{{ if .Env.https_proxy }} \uD83D\uDD10 {{ .Env.https_proxy }} {{ end }}{{ if .Env.http_proxy }} \uD83D\uDD13 {{ .Env.http_proxy }} {{ end }}{{ end }}{{ end }}",
+          "properties": {
+            "cache_duration": "none"
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "newline": false,
+      "segments": [
+        {
+          "type": "battery",
+          "style": "diamond",
+          "leading_diamond": " \uE0B6",
+          "trailing_diamond": "\uE0B4 ",
+          "template": "{{if ne \"Full\" .State.String}} {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}\uF295 {{end}}",
+          "background_templates": [
+            "{{if eq \"Charging\" .State.String}}#3C8C3F{{end}}",
+            "{{if eq \"Discharging\" .State.String}}#ff5722{{end}}",
+            "{{if eq \"Full\" .State.String}}#3C8C3F{{end}}"
+          ],
+          "properties": {
+            "cache_duration": "none",
+            "charged_icon": "\uE22F ",
+            "charging_icon": "\uE234 ",
+            "discharging_icon": "\uE231 "
+          }
+        },
+        {
+          "type": "status",
+          "style": "diamond",
+          "leading_diamond": " \uE0B6",
+          "trailing_diamond": "\uE0B4 ",
+          "background": "#C50F1F",
+          "foreground": "#EEEEEE",
+          "properties": {
+            "cache_duration": "none",
+            "display_exit_code": true
+          }
+        },
+        {
+          "type": "executiontime",
+          "style": "diamond",
+          "leading_diamond": " \uE0B6",
+          "trailing_diamond": "\uE0B4 ",
+          "background": "#83769C",
+          "foreground": "#EEEEEE",
+          "properties": {
+            "cache_duration": "none",
+            "style": "austin",
+            "threshold": 1000
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "type": "root",
+          "style": "plain",
+          "foreground": "#FFE9AA",
+          "template": "\uF0E7 ",
+          "properties": {
+            "cache_duration": "none",
+            "root_icon": "\uF0E7"
+          }
+        },
+        {
+          "type": "session",
+          "style": "plain",
+          "foreground": "#16C60C",
+          // ugh, leading space? really?
+          "template": "{{ if .SSHSession }}\uDB80\uDF18 {{ end }}{{ .UserName }}@{{ .HostName }} ",
+          "properties": {
+            "cache_duration": "none"
+          }
+        },
+        {
+          "type": "os",
+          "style": "plain",
+          "template": "{{ if .WSL }}\uE70F{{ end }}{{.Icon}}",
+          "properties": {
+            "cache_duration": "none"
+          }
+        },
+        {
+          "type": "path",
+          "style": "plain",
+          "foreground": "#F9F1A5",
+          "properties": {
+            "cache_duration": "none",
+            "enable_hyperlink": true,
+            "style": "full"
+          }
+        },
+        {
+          "type": "git",
+          "style": "plain",
+          "foreground": "#61D6D6",
+          // Default puts unstaged before staged; I want it the other way (like posh-git).
+          "template": "<#F9F1A5>[</>{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }}<#16C60C> \uF046 {{ .Staging.String }}</>{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }}<#F9F1A5> |</>{{ end }}{{ if .Working.Changed }}<#E74856> \uF044 {{ .Working.String }}</>{{ end }}{{ if gt .StashCount 0 }} <#83769C>\uE240{{ .StashCount }}</>{{ end }}{{ if .IsWorkTree }}<#228B22> \uF1BB</>{{ else if gt .WorktreeCount 0}}<#228B22> \uF1BB{{ .WorktreeCount }}</>{{ end }}<#F9F1A5>]</>",
+          "foreground_templates": [
+            "{{ if and (gt .Ahead 0) (gt .Behind 0) }}#F9F1A5{{ end }}",
+            "{{ if gt .Ahead 0 }}#16C60C{{ end }}",
+            "{{ if gt .Behind 0 }}#E74856{{ end }}"
+          ],
+          "properties": {
+            "branch_gone_icon": "<#3A96DD>×</>",
+            "branch_icon": "",
+            "branch_max_length": 0,
+            "cache_duration": "none",
+            "fetch_stash_count": true,
+            "fetch_status": true,
+            "fetch_upstream_icon": true,
+            "truncate_symbol": "\u2026",
+            "upstream_icons": {
+              "ghe.coxautoinc.com": "<#cd6c4a>\uDB80\uDCD6</>" // U+F00D6 nf-md-briefcase with deliberate surrounding color
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "type": "text",
+          "style": "plain",
+          "template": "{{if .Root}}<#FFE9AA>{{else}}<>{{end}}{{if (or (eq .Shell \"pwsh\") (eq .Shell \"powershell\")) }}§{{ else if .Root }}#{{ else }}${{end}}</> ",
+          "properties": {
+            "cache_duration": "none"
+          }
+        }
+      ]
+    }
+  ]
+}

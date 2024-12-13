@@ -1,0 +1,35 @@
+
+#------------------------------------------------------------------------------
+# powershell:  file(1) magic for PowerShell
+#
+# PowerShell shell magic
+0	string/wt	#!\ /usr/local/bin/pwsh		PowerShell script text executable
+!:mime	application/x-powershell
+!:ext ps1
+0	string/wt	#!\ /usr/bin/pwsh		PowerShell script text executable
+!:mime	application/x-powershell
+!:ext ps1
+0	string/wt	#!\ /usr/bin/env\ pwsh		PowerShell script text executable
+!:mime	application/x-powershell
+!:ext ps1
+0	string/wt	#!\ /usr/bin/env\ -S\ pwsh		PowerShell script text executable
+!:mime	application/x-powershell
+!:ext ps1
+0	string	#!
+>0	regex	\^#!.*\bpwsh\b		PowerShell script text executable
+!:mime	application/x-powershell
+!:ext ps1
+
+
+# .psd1
+0		string/wt		@{		PowerShell data
+>&0	regex/1024/c	RootModule|ModuleVersion	\b, module definition
+!:mime	text/x-powershell
+!:ext psd1
+
+0		string/wt		#
+>0		search/8192/wt		@{		PowerShell data
+>>&0	regex/1024/c	RootModule|ModuleVersion	\b, module definition
+!:mime	text/x-powershell
+!:ext psd1
+

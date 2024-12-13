@@ -1,0 +1,22 @@
+#
+# .profile
+#
+# Called on login shells.
+#
+
+##echo>&2 "ENTRY .profile"
+
+# cdonnelly: Hack for embedded Linux systems where you can't (or shouldn't) change the shell for some reason.
+# Need to look at writing a C program to make it do this.
+if [ "${SHELL}" == "/bin/sh" -o "${SHELL}" == "/bin/ash" ] ; then
+    for sh_x in $(cat ~/.local/.shell 2>/dev/null) /bin/bash /opt/bin/bash ; do
+        [ -x "${sh_x}" ] || continue
+        export SHELL="${sh_x}"
+        ##echo>&2 "EXIT  .profile (exec ${SHELL})"
+        exec "${SHELL}"
+    done
+fi
+
+# cdonnelly 2018-03-09: I don't believe bash calls this if .bash_profile exists
+##echo>&2 "EXIT  .profile"
+

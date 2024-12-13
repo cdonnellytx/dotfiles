@@ -1,0 +1,5 @@
+# @see https://octave.org/doc/v4.0.1/Customizing-the-Prompt.html
+PS1('[\u@\h \w] \s:\#\n>> ')
+
+edit mode "async"
+history_control("ignoredups")

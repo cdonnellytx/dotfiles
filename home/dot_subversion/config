@@ -1,0 +1,369 @@
+### This file configures various client-side behaviors.
+###
+### The commented-out examples below are intended to demonstrate
+### how to use this file.
+
+### Section for authentication and authorization customizations.
+[auth]
+### Set password stores used by Subversion. They should be
+### delimited by spaces or commas. The order of values determines
+### the order in which password stores are used.
+### Valid password stores:
+###   gnome-keyring        (Unix-like systems)
+###   kwallet              (Unix-like systems)
+###   gpg-agent            (Unix-like systems)
+###   keychain             (Mac OS X)
+###   windows-cryptoapi    (Windows)
+# password-stores = windows-cryptoapi
+### To disable all password stores, use an empty list:
+# password-stores =
+###
+### Set ssl-client-cert-file-prompt to 'yes' to cause the client
+### to prompt for a path to a client cert file when the server
+### requests a client cert but no client cert file is found in the
+### expected place (see the 'ssl-client-cert-file' option in the
+### 'servers' configuration file). Defaults to 'no'.
+# ssl-client-cert-file-prompt = no
+###
+### The rest of the [auth] section in this file has been deprecated.
+### Both 'store-passwords' and 'store-auth-creds' can now be
+### specified in the 'servers' file in your config directory
+### and are documented there. Anything specified in this section 
+### is overridden by settings specified in the 'servers' file.
+# cdonnelly 2015-11-10: Note, of course, that due to ancient versions of Subversion (1.6!!!) still in use on RHEL servers, make sure anything we do is compatible.
+# store-passwords = no
+# store-auth-creds = no
+
+### Section for configuring external helper applications.
+[helpers]
+### Set editor-cmd to the command used to invoke your text editor.
+###   This will override the environment variables that Subversion
+###   examines by default to find this information ($EDITOR, 
+###   et al).
+# editor-cmd = editor (vi, emacs, notepad, etc.)
+### Set diff-cmd to the absolute path of your 'diff' program.
+###   This will override the compile-time default, which is to use
+###   Subversion's internal diff implementation.
+# diff-cmd = diff_program (diff, gdiff, etc.)
+### Diff-extensions are arguments passed to an external diff
+### program or to Subversion's internal diff implementation.
+### Set diff-extensions to override the default arguments ('-u').
+# diff-extensions = -u -p
+### Set diff3-cmd to the absolute path of your 'diff3' program.
+###   This will override the compile-time default, which is to use
+###   Subversion's internal diff3 implementation.
+# diff3-cmd = diff3_program (diff3, gdiff3, etc.)
+### Set diff3-has-program-arg to 'yes' if your 'diff3' program
+###   accepts the '--diff-program' option.
+# diff3-has-program-arg = [yes | no]
+### Set merge-tool-cmd to the command used to invoke your external
+### merging tool of choice. Subversion will pass 5 arguments to
+### the specified command: base theirs mine merged wcfile
+# merge-tool-cmd = merge_command
+
+### Section for configuring tunnel agents.
+[tunnels]
+### Configure svn protocol tunnel schemes here.  By default, only
+### the 'ssh' scheme is defined.  You can define other schemes to
+### be used with 'svn+scheme://hostname/path' URLs.  A scheme
+### definition is simply a command, optionally prefixed by an
+### environment variable name which can override the command if it
+### is defined.  The command (or environment variable) may contain
+### arguments, using standard shell quoting for arguments with
+### spaces.  The command will be invoked as:
+###   <command> <hostname> svnserve -t
+### (If the URL includes a username, then the hostname will be
+### passed to the tunnel agent as <user>@<hostname>.)  If the
+### built-in ssh scheme were not predefined, it could be defined
+### as:
+# ssh = $SVN_SSH ssh -q
+### If you wanted to define a new 'rsh' scheme, to be used with
+### 'svn+rsh:' URLs, you could do so as follows:
+# rsh = rsh
+### Or, if you wanted to specify a full path and arguments:
+# rsh = /path/to/rsh -l myusername
+### On Windows, if you are specifying a full path to a command,
+### use a forward slash (/) or a paired backslash (\\) as the
+### path separator.  A single backslash will be treated as an
+### escape for the following character.
+
+### Section for configuring miscellaneous Subversion options.
+[miscellany]
+### Set global-ignores to a set of whitespace-delimited globs
+### which Subversion will ignore in its 'status' output, and
+### while importing or adding files and directories.
+### '*' matches leading dots, e.g. '*.rej' matches '.foo.rej'.
+global-ignores = \
+    *.o *.lo *.la .*.rej *.rej .*~ *~ .#* ~$* \
+    *.swp *.swo .*.swp .*.swo *.tmp \
+    Ankh.Load Ankh.NoLoad \
+    .vs bin obj TestResults .vspscc *.cache *.csproj.user *.docstates *.idc *.pidb *.psess *.suo *.vs10x *.vspx \
+    _UpgradeReport_Files UpgradeLog.XML \
+    *.resharper *.resharper.user _ReSharper.* *.DotSettings.user \
+    target *-xmin.* *-xdebug.* .sass-cache \
+    breezebrowser.dat Thumbs.db \
+    .DS_Store *.pbxuser *.perspectivev3 *.mode1v3 xcuserdata \
+    *.userprefs *.resources \
+    sqlnet.log afiedt.buf \
+    SmartBuild.cache.tmp \
+    *.lnk \
+    \
+    .AppleDB .AppleDesktop .AppleDouble .apdisk .TemporaryItems \
+    cdonnelly_working.sql
+
+### Set log-encoding to the default encoding for log messages
+# log-encoding = latin1
+### Set use-commit-times to make checkout/update/switch/revert
+### put last-committed timestamps on every file touched.
+# use-commit-times = yes
+### Set no-unlock to prevent 'svn commit' from automatically
+### releasing locks on files.
+# no-unlock = yes
+### Set mime-types-file to a MIME type registry file, used to
+### provide hints to Subversion's MIME type auto-detection
+### algorithm.
+# mime-types-file = /path/to/mime.types
+### Set preserved-conflict-file-exts to a whitespace-delimited
+### list of patterns matching file extensions which should be
+### preserved in generated conflict file names.  By default,
+### conflict files use custom extensions.
+# preserved-conflict-file-exts = doc ppt xls od?
+### Set enable-auto-props to 'yes' to enable automatic properties
+### for 'svn add' and 'svn import', it defaults to 'no'.
+### Automatic properties are defined in the section 'auto-props'.
+enable-auto-props = yes
+### Set interactive-conflicts to 'no' to disable interactive
+### conflict resolution prompting.  It defaults to 'yes'.
+# interactive-conflicts = no
+### Set memory-cache-size to define the size of the memory cache
+### used by the client when accessing a FSFS repository via
+### ra_local (the file:// scheme). The value represents the number
+### of MB used by the cache.
+# memory-cache-size = 16
+### Set diff-ignore-content-type to 'yes' to cause 'svn diff' to
+### attempt to show differences of all modified files regardless
+### of their MIME content type.  By default, Subversion will only
+### attempt to show differences for files believed to have human-
+### readable (non-binary) content.  This option is especially
+### useful when Subversion is configured (via the 'diff-cmd'
+### option) to employ an external differencing tool which is able
+### to show meaningful differences for binary file formats.  [New
+### in 1.9]
+# diff-ignore-content-type = no
+
+### Section for configuring automatic properties.
+[auto-props]
+### The format of the entries is:
+###   file-name-pattern = propname[=value][;propname[=value]...]
+### The file-name-pattern can contain wildcards (such as '*' and
+### '?').  All entries which match (case-insensitively) will be
+### applied to the file.  Note that auto-props functionality
+### must be enabled, which is typically done by setting the
+### 'enable-auto-props' option.
+# *.c = svn:eol-style=native
+# *.cpp = svn:eol-style=native
+# *.h = svn:keywords=Author Date Id Rev URL;svn:eol-style=native
+# *.dsp = svn:eol-style=CRLF
+# *.dsw = svn:eol-style=CRLF
+# *.sh = svn:eol-style=native;svn:executable
+# *.txt = svn:eol-style=native;svn:keywords=Author Date Id Rev URL;
+# *.png = svn:mime-type=image/png
+# *.jpg = svn:mime-type=image/jpeg
+# Makefile = svn:eol-style=native
+#
+# General
+#
+README = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+*.markdown = svn:mime-type=text/x-markdown
+*.md = svn:mime-type=text/x-markdown
+*.txt = svn:mime-type=text/plain
+#
+# Database
+#
+*.sql = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+# .par: common extension for Oracle expdp/impdp parameter file
+*.par = svn:mime-type=text/plain
+#
+# Images
+#
+*.bmp = svn:mime-type=image/bmp
+*.gif = svn:mime-type=image/gif
+*.ico = svn:mime-type=image/x-icon
+*.jpg = svn:mime-type=image/jpeg
+*.png = svn:mime-type=image/png
+*.psd = svn:mime-type=image/x-photoshop
+*.svg = svn:mime-type=image/svg+xml
+#
+# Web
+#
+*.css  = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/css
+*.scss = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/css
+*.js   = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/javascript
+*.json = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/json
+*.htm  = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/html
+*.html = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/html
+*.manifest = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/cache-manifest;svn:eol-style=LF
+*.coffee = svn:mime-type=text/plain
+#
+# Flash
+#
+# .as - ActiveScript
+*.as = svn:mime-type=text/plain
+*.swf = svn:mime-type=application/x-shockwave-flash
+#
+# XML
+#
+*.xml = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/xml
+*.xsd = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/xml
+*.xsl = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/xml
+*.xslt = svn:keywords=Id Rev Date Author URL;svn:mime-type=text/xml
+#
+# .NET
+#
+*.as?x = svn:mime-type=text/plain
+*.config = svn:mime-type=text/xml
+*.cs = svn:mime-type=text/plain
+*.cshtml = svn:mime-type=text/plain
+*.csproj = svn:mime-type=text/plain
+*.datasource = svn:mime-type=text/xml
+*.DotSettings = svn:mime-type=text/xml
+*.fs = svn:mime-type=text/plain
+*.fshtml = svn:mime-type=text/plain
+*.props = svn:mime-type=text/xml
+*.refresh = svn:mime-type=text/plain
+*.refresh.smart = svn:mime-type=text/plain
+*.resx = svn:mime-type=text/xml
+*.settings = svn:mime-type=text/xml
+# .sln won't work with Visual Studio if UNIX format...
+*.sln = svn:mime-type=text/plain; svn:eol-style=CRLF
+*.tt = svn:mime-type=text/plain
+*.vb = svn:mime-type=text/plain
+*.vbhtml = svn:mime-type=text/plain
+*.vbproj = svn:mime-type=text/plain
+#
+# Java
+#
+*.java = svn:mime-type=text/plain
+*.properties = svn:mime-type=text/plain
+#
+# TOAD
+#
+# .sce is autodetected by vim as "scilab".  Assuming it's text/plain as well.
+*.sce = svn:mime-type=text/plain
+#
+# TOAD Data Modeler
+#
+# .t??- x=XML, b=binary, l=logical, p=physical
+*.tbl = svn:mime-type=application/octet-stream
+*.tbp = svn:mime-type=application/octet-stream
+*.txl = svn:mime-type=text/xml
+*.txp = svn:mime-type=text/xml
+#
+# Windows
+#
+*.bat = svn:eol-style=CRLF;svn:executable;svn:mime-type=text/plain
+# PowerShell
+*.ps1 = svn:eol-style=CRLF;svn:executable;svn:mime-type=text/plain
+*.psd1 = svn:mime-type=text/plain
+*.psm1 = svn:mime-type=text/plain
+*.ps1xml = svn:mime-type=text/xml
+*.clixml = svn:mime-type=text/xml
+*.psc1 = svn:mime-type=text/plain
+*.pssc = svn:mime-type=text/plain
+# regedit won't load .reg files unless they are UTF-16 and CRLF, but Subversion chokes on that.  Just set text/plain for now.
+*.reg = svn:mime-type=text/plain
+#
+# Unix
+#
+# Cygwin bash/perl will handle CRLFs or LFs in scripts, but Linux only works with LFs.
+*.sh = svn:eol-style=LF;svn:executable;svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+*.pl = svn:eol-style=LF;svn:executable;svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+*.pm = svn:eol-style=LF;svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+*.vim = svn:eol-style=LF;svn:keywords=Id Rev Date Author URL;svn:mime-type=text/plain
+#
+# Script languages that don't care about CRLF vs LF
+#
+*.php = svn:mime-type=text/plain
+*.py = svn:mime-type=text/plain
+*.rb = svn:mime-type=text/plain
+#
+# C/C++
+#
+*.c = svn:mime-type=text/plain
+*.h = svn:mime-type=text/plain
+*.cc = svn:mime-type=text/plain
+*.cpp = svn:mime-type=text/plain
+*.hpp = svn:mime-type=text/plain
+#
+# Cocoa/Objective-C/Swift
+#
+*.m = svn:mime-type=text/plain
+*.mm = svn:mime-type=text/plain
+*.pch = svn:mime-type=text/plain
+*.properties = svn:mime-type=text/plain
+*.strings = svn:mime-type=text/plain
+*.swift = svn:mime-type=text/plain
+*.xib = svn:mime-type=text/xml
+iTunesArtwork = svn:mime-type=image/png
+#
+# Documents
+#
+*.pdf = svn:mime-type=application/pdf
+#
+# Microsoft Office (old)
+#
+*.doc = svn:mime-type=application/msword
+*.xls = svn:mime-type=application/vnd.ms-excel
+*.ppt = svn:mime-type=application/vnd.ms-powerpoint
+#
+# Microsoft Office
+#
+# Taken from http://www.bram.us/2007/05/25/office-2007-mime-types-for-iis/
+*.docm = svn:mime-type=application/vnd.ms-word.document.macroEnabled.12
+*.docx = svn:mime-type=application/vnd.openxmlformats-officedocument.wordprocessingml.document
+*.dotm = svn:mime-type=application/vnd.ms-word.template.macroEnabled.12
+*.dotx = svn:mime-type=application/vnd.openxmlformats-officedocument.wordprocessingml.template
+*.potm = svn:mime-type=application/vnd.ms-powerpoint.template.macroEnabled.12
+*.potx = svn:mime-type=application/vnd.openxmlformats-officedocument.presentationml.template
+*.ppam = svn:mime-type=application/vnd.ms-powerpoint.addin.macroEnabled.12
+*.ppsm = svn:mime-type=application/vnd.ms-powerpoint.slideshow.macroEnabled.12
+*.ppsx = svn:mime-type=application/vnd.openxmlformats-officedocument.presentationml.slideshow
+*.pptm = svn:mime-type=application/vnd.ms-powerpoint.presentation.macroEnabled.12
+*.pptx = svn:mime-type=application/vnd.openxmlformats-officedocument.presentationml.presentation
+*.xlam = svn:mime-type=application/vnd.ms-excel.addin.macroEnabled.12
+*.xlsb = svn:mime-type=application/vnd.ms-excel.sheet.binary.macroEnabled.12
+*.xlsm = svn:mime-type=application/vnd.ms-excel.sheet.macroEnabled.12
+*.xlsx = svn:mime-type=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+*.xltm = svn:mime-type=application/vnd.ms-excel.template.macroEnabled.12
+*.xltx = svn:mime-type=application/vnd.openxmlformats-officedocument.spreadsheetml.template
+#
+# OpenOffice.org
+#
+*.odb = svn:mime-type=application/vnd.sun.xml.base
+*.odf = svn:mime-type=application/vnd.oasis.opendocument.formula
+*.odg = svn:mime-type=application/vnd.oasis.opendocument.graphics
+*.odm = svn:mime-type=application/vnd.oasis.opendocument.text-master
+*.odp = svn:mime-type=application/vnd.oasis.opendocument.presentation
+*.ods = svn:mime-type=application/vnd.oasis.opendocument.spreadsheet
+*.odt = svn:mime-type=application/vnd.oasis.opendocument.text
+
+### Section for configuring working copies.
+[working-copy]
+### Set to a list of the names of specific clients that should use
+### exclusive SQLite locking of working copies.  This increases the
+### performance of the client but prevents concurrent access by
+### other clients.  Third-party clients may also support this
+### option.
+### Possible values:
+###   svn                (the command line client)
+# exclusive-locking-clients =
+### Set to true to enable exclusive SQLite locking of working
+### copies by all clients using the 1.8 APIs.  Enabling this may
+### cause some clients to fail to work properly. This does not have
+### to be set for exclusive-locking-clients to work.
+# exclusive-locking = false
+### Set the SQLite busy timeout in milliseconds: the maximum time
+### the client waits to get access to the SQLite database before
+### returning an error.  The default is 10000, i.e. 10 seconds.
+### Longer values may be useful when exclusive locking is enabled.
+# busy-timeout = 10000

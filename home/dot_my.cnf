@@ -1,0 +1,4 @@
+[mysql]
+prompt="\\n\\u@\\h:\\d - \\D\\n>\\_"
+pager=less
+

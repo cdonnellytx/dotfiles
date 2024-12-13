@@ -1,0 +1,3 @@
+# gitconfig files MUST be lf
+*   text eol=lf
+

@@ -1,0 +1,19 @@
+{{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+
+# vim: ft=toml :
+# PowerShell: use Core
+[interpreters.ps1]
+    command = "pwsh"
+    args = ["-NoLogo"]
+
+[diff]
+{{- if $programs.delta }}
+    # Using delta for two reasons:
+    #   1. It highlights the diff AND the underlying file syntax
+    #   2. It avoids problems with PAGER having command-line switches in them.
+    command = {{ $programs.delta | toToml }}
+    pager = {{ $programs.delta | toToml }}
+{{- end }}
+
+[env]
+    PSModulePath = {{ joinPath .chezmoi.workingTree "lib/modules"  | toToml }}

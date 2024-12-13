@@ -1,0 +1,3 @@
+# Use local newline for AWS, the CLI tool requires it.
+* text=auto
+

@@ -1,0 +1,37 @@
+
+# vim: filetype=conf ts=8 sts=8 sw=8 noexpandtab
+
+###############################################################################
+# Visual Studio .sln file
+###############################################################################
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 7.00	Microsoft Visual Studio Solution (2002)
+!:mime	text/plain
+!:strength + 6
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 8.00	Microsoft Visual Studio Solution (2003)
+!:mime	text/plain
+!:strength + 6
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 9.00	Microsoft Visual Studio Solution (2005)
+!:mime	text/plain
+!:strength + 6
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 10.00	Microsoft Visual Studio Solution (2008)
+!:mime	text/plain
+!:strength + 6
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 11.00	Microsoft Visual Studio Solution (2010)
+!:mime	text/plain
+!:strength + 6
+
+# 12.0 and later all call themselves 12.0
+0	search/3/t	Microsoft\ Visual\ Studio\ Solution\ File,\ Format\ Version\ 12.00	Microsoft Visual Studio Solution
+!:mime	text/plain
+!:strength + 5
+>&0	search/3/t	\043\ Visual\ Studio\ 	\b
+>>&0	regex	\^[0-9]{4}\\>	(%s)
+# 2010 Express used 12.00 at some point
+>>&0	string	11	(2010)
+>>&0	string	12	(2012)
+>>&0	string	13	(2013)
+>>&0	string	14	(2015)
+>>&0	string	15	(2017)
+# covering 16..99
+>>&0	regex	\^(1[6-9]|[2-9][0-9])\\>	('%s)
+

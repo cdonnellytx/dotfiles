@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# saftey checks
+[ -n "$ORACLE_HOME" ] || { echo ORACLE_HOME is not set 1>&2; exit 1; }
+[ -d "$ORACLE_HOME/bin" ] || { echo ORACLE_HOME/bin is not a directory 1>&2; exit 1; }
+
+rlwrap -i -b '()=!<>&+*|:;,' $ORACLE_HOME/bin/asmcmd -p $*

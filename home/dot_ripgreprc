@@ -1,0 +1,9 @@
+# .ripgreprc file
+#
+# By default ripgrep ignores this; you MUST set the `RIPGREP_CONFIG_PATH` environment variable.
+
+
+# Show "hidden" files.
+# RGCRAP: You can't disable it for files whose names begin with `.` without also disabling it for the Hidden attribute in Windows.
+# As the use case is search leading-dot files in a git repo but not .git itself, this fails miserably.
+# --hidden

@@ -1,0 +1,6 @@
+{{- dict
+       "bat" (and ($p := lookPath "bat") (base $p))
+       "delta" (and ($p := lookPath "delta") (base $p))
+       "pwsh" (and ($p := lookPath "pwsh") (base $p))
+       "winget" (and ($p := lookPath "winget") (base $p))
+  | toJson -}}

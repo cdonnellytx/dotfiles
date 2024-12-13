@@ -1,0 +1,59 @@
+{
+  "name": "cdonnelly",
+  "description": "My personal color scheme by Chris Donnelly",
+  "repository": "https://github.com/cdonnellytx/PowerShell",
+  //"background": "Black",
+  //"foreground": "Gray",
+  "popupBackground": "White",
+  "popupForeground": "DarkMagenta",
+  "palette": {
+    "Black": "#0c0c0c",
+    "DarkGray": "#767676",
+    "DarkGreen": "#13a10e",
+    "DarkYellow": "#c19c00",
+    "DarkBlue": "#0037da",
+    "DarkCyan": "#3a96dd",
+    "Gray": "#cccccc",
+    "White": "#f2f2f2",
+    "Red": "#e74856",
+    "DarkRed": "#c50f1f",
+    "Yellow": "#f9f1a5",
+    "Green": "#16c60c",
+    "Cyan": "#61d6d6",
+    "Blue": "#3b78ff",
+    "Magenta": "#b4009e",
+    "DarkMagenta": "#881798"
+  },
+  "tokens": {
+    "readline": {
+      "foreground": {
+        "Command": "Yellow",
+        "Comment": "Green",
+        "ContinuationPrompt": "Gray",
+        "DefaultToken": "Gray",
+        "Emphasis": "Cyan",
+        "Error": "Red",
+        "Keyword": "Green",
+        "Member": "Blue",
+        "Number": "Blue",
+        "Operator": "Gray",
+        "Parameter": "Gray",
+        "String": "Cyan",
+        "Type": "Gray",
+        "Variable": "Green"
+      }
+    },
+    "write": {
+      "foreground": {
+        "Error": "Red",
+        "Warning": "Yellow",
+        "Verbose": "Magenta",
+        "Debug": "Green",
+        "Progress": "Yellow"
+      },
+      "background": {
+        "Progress": "DarkCyan"
+      }
+    }
+  }
+}

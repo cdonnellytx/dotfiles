@@ -1,0 +1,3 @@
+authorized_keys       text eol=lf
+config                text eol=lf
+known_hosts           text eol=lf

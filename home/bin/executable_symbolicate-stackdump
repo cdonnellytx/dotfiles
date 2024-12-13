@@ -1,0 +1,246 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use v5.14;
+
+use Carp qw(confess cluck);
+use Data::Dumper qw(Dumper);
+use File::Spec;
+use Getopt::Long qw(:config no_ignore_case);
+use IPC::Open2;
+use Log::Log4perl qw(:easy);
+
+my %dependencyCache = ();
+
+sub getDebugPath($) {
+    my $path = shift;
+
+    # cdonnelly 2014-05-06: ldd only works
+
+    # Kill leading /
+    my $relPath = File::Spec->abs2rel($path, '/');
+
+    # They're all located in /usr/lib/debug/$relPath
+    # In 99% of cases, x.dll => x.dll.dbg, but not for cygwin1.dll.
+    # THANKS OBAMA
+    unless ($relPath =~ s/cygwin1\.dll$/cygwin1.dbg/) {
+        $relPath .= '.dbg';
+    }
+
+    return File::Spec->catfile('/usr/lib/debug', $relPath);
+}
+
+sub isNativeWindows($) {
+    my $path = shift;
+    # LATER: get cygdrive prefix
+    return $path =~ m!^(?<prefix>/[^/]+)?/[a-z]/!;
+}
+
+sub depsort($$) {
+    my ($a, $b) = @_;
+    return $a->{depth} <=> $b->{depth}
+        || isNativeWindows($a->{path}) <=> isNativeWindows($b->{path});
+}
+
+sub usage(;$) {
+    my $out = shift || *STDERR;
+    print $out "Usage: $0 [OPTION]... [FILE]...\n";
+}
+
+sub _resolveDependencies($);
+sub _resolveDependencies($) {
+    my ($bin) = @_;
+
+    my $cached = $dependencyCache{$bin->{path}};
+    return @{$cached} if $cached;
+
+    $bin->{seen}->{$bin->{path}} = 1;
+
+    my @dependencies = ($bin);  # include self
+    my $childDepth = $bin->{depth} + 1;
+
+    # Process debug lib if it exists.
+    my $debugPath = getDebugPath($bin->{path});
+    if (-e $debugPath) {
+        confess "$debugPath found but is not readable" unless -r $debugPath;
+        DEBUG('    ' x $childDepth, "[DEBUG]$debugPath\[/DEBUG]\n");
+        push(@dependencies, _resolveDependencies({
+            path => $debugPath,
+            type => $bin->{type},
+            debug => 1,
+            depth => $childDepth,
+            seen => $bin->{seen}
+        }));
+    }
+
+    # Process dependencies... UNLESS it's a debug dll, then don't, because that doesn't work.
+    unless ($bin->{debug} && $bin->{type} eq 'dll') {
+        open(LDD, '-|', "ldd '$bin->{path}'") or confess "Cannot find dependencies for ${bin}: $!";
+        while (<LDD>) {
+            chomp;
+            DEBUG('    ' x $childDepth, "[LDD]$_\[/LDD]\n");
+            next unless /=\> (?<path>\S.*\.(?<type>exe|dll)) \(0x[0-9A-F]+\)$/i;
+
+            my $childPath = File::Spec->canonpath($+{path});
+            my $childType = lc $+{type};
+            # Some DLLs have circular dependencies; skip crawling those.
+            next if $bin->{seen}->{$childPath};
+            confess if $bin->{path} eq $childPath; # seen should block this.
+
+            push(@dependencies, _resolveDependencies({
+                path => $childPath,
+                type => $childType,
+                depth => $childDepth,
+                seen => $bin->{seen},
+            }));
+        }
+    }
+
+    @dependencies = sort depsort @dependencies;
+
+    $dependencyCache{$bin->{path}} = [ @dependencies ];
+    return @dependencies;
+}
+
+
+sub resolveDependencies($) {
+    my $path = shift;
+    my $bin = {
+        path => File::Spec->canonpath($path),
+        type => 'exe',
+        depth => 0,
+        seen => {},
+    };
+    DEBUG($bin->{path}, "\n");
+    return map { $_->{path} } _resolveDependencies($bin);
+}
+
+# why isn't there a close2?
+sub close2($$$) {
+    my ($hOut, $hIn, $pid) = @_;
+    DEBUG "CLOSE OUT HANDLE $hOut";
+    close($hOut);
+    DEBUG "CLOSE OUT HANDLE $hIn";
+    close($hIn);
+    DEBUG "WAITPID $pid";
+    waitpid($pid, 0);
+}
+
+
+
+sub symbolicate($$) {
+    my ($stackdump, $options) = @_;
+    confess "Invalid filename: ${stackdump}" unless $stackdump =~ /(?<exe>.*)\.stackdump$/;  # LATER: detect type
+
+    my $exePath = $+{exe};
+    unless (-e $exePath) {
+        # OK, it's not right next to our file.
+        # Use PATH
+        my ($volume, $dirs, $file) = File::Spec->splitpath($exePath);
+        $exePath = `which "${file}" 2>/dev/null`;
+        chomp $exePath;
+        confess "File not found: $file (not in PATH or at $exePath)" unless -e $exePath;
+    }
+
+    my @dependencies = resolveDependencies($exePath);
+
+    my @frames;
+    print("==> ${stackdump} <==\n") if $options->{printFilenames};
+    open(FH, '<', $stackdump) or confess "Cannot open ${stackdump}: $!";
+    while (<FH>) {
+        next unless /^(?<frame>[A-F0-9]+) \s+ (?<function>[A-F0-9]+)/ix;
+        push(@frames, { %+ });
+    }
+
+    DEPENDENCY:
+    foreach my $dependency (resolveDependencies($exePath)) {
+        DEBUG("Try $dependency");
+        my ($ain, $aout, $pid);
+        $pid = open2($ain, $aout, 'addr2line', '-e', $dependency) or die "Cannot invoke addr2line -e $dependency: $!";
+        my $i = 0;
+        FRAME:
+        foreach my $frame (@frames) {
+            DEBUG sprintf("\%d/\%d", ++$i, scalar @frames);
+            next if $frame->{fileInfo};
+            DEBUG "[$i] PRINTING $frame->{function} \n";
+            print($aout $frame->{function}, "\n");
+            DEBUG "[$i] READING RESULT";
+            my $ret = <$ain>;
+            chomp $ret;
+            DEBUG "[$i] => $ret";
+            if ($ret =~ /^(fake|\?\?):/) {
+                DEBUG("$frame->{function} not in $dependency");
+            } else {
+                DEBUG("$frame->{function} in $dependency");
+                $frame->{fileInfo} = $ret;
+            }
+        }
+
+        close2($ain, $aout, $pid);
+        confess(sprintf('addr2line -e %s failed with status code %d', $dependency, ($? >> 8))) if $?;
+
+        last unless grep { !$_->{fileInfo} } @frames;
+    }
+
+    print map { sprintf("\%s \%s\n", $_->{function}, $_->{fileInfo} || '<not found>') } @frames;
+    print "\n" if $options->{printFilenames};
+}
+
+sub main(@) {
+    my @args = @_;
+
+    my $options = {
+        level => $WARN,
+        dryrun => 0,
+        #printFilenames => default to 1 if @files > 1, 0 otherwise
+    };
+
+    Getopt::Long::GetOptionsFromArray(
+        \@args,
+        'h|no-filename' => sub {
+            $options->{printFilenames} = 0;
+        },
+        'H|with-filename' => sub {
+            $options->{printFilenames} = 1;
+        },
+        'l|log-level=s' => sub {
+            my ($wut, $value) = @_;
+            $options->{level} = 1;
+            if ($value =~ /^\d+$/) {
+                $options->{level} = $value;
+            } elsif ($value =~ /^[A-Z]+$/i) {
+                my $v = eval('$' . uc($value));
+                confess "Invalid value: '$value'" unless defined $v;
+                $options->{level} = $v;
+            } else {
+                confess "Invalid value: '$value'";
+            }
+        },
+        'debug' => sub { $options->{level} = $DEBUG; },
+        'n|dry-run!'    => \$options->{dryrun},
+        'help'          => sub {
+            usage(*STDOUT);
+            exit 0;
+        }
+    );
+
+    Log::Log4perl->easy_init($options->{level});
+
+    given (scalar @args) {
+        when (0) {
+            usage();
+            exit 1;
+        }
+        when (1) {
+            symbolicate($_, $options) for @args;
+        }
+        default {
+            $options->{printFilenames} = 1 unless exists $options->{printFilenames};
+            symbolicate($_, $options) for @args;
+        }
+    }
+}
+
+main(@ARGV);
+exit 0;

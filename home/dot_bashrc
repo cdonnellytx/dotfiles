@@ -1,0 +1,60 @@
+#
+# .bashrc
+#
+# Called on non-login shells.
+#
+
+##echo>&2 "ENTRY .bashrc"
+##set -o verbose
+##set -o xtrace
+##export PROFILE_D_VERBOSE=1
+##export PROFILE_D_TIMING=1
+
+
+# LATER: we really should not execute bashrc unless interactive.
+# If not running interactively, don't do anything
+# case $- in
+#    *i*) ;;
+#      *) return;;
+#esac
+
+# cdonnelly 2021-05-17: OK, so bash has this whole thing about "login shells" vs "not login shells".
+# The problems with these are numerous and conflicting:
+#   - Nested shells are NOT login shells, so don't run .bash_profile
+#   - sshd SHOULD NOT "UseLogin yes", so when that's off, it won't run .bash_profile.
+#
+# cdonnelly 2022-01-04: Synology wreaks additional havoc by having /etc/profile source ~/.bashrc.
+#
+# The short answer is "find any way this is the **top** shell -- login or not".
+# Only run if this is NOT a login shell.
+# .bash_profile will know to load our scripts.
+if shopt -q login_shell ; then
+    # Shell is a login shell.
+    # We can assume bash will run .bash_profile, which in turn will invoke the nested .bashrc.d scripts.
+    ##echo>&2 "EXIT  .bashrc (login shell)"
+    return
+elif [ ${SHLVL} -eq 1 ] ; then
+    # Shell is a top-level shell that is NOT a login shell.
+    # This means we have to run .bash_profile ourselves.
+    source ~/.bash_profile
+    ##echo>&2 "EXIT  .bashrc (shlvl=1)"
+    return
+else
+    # This is NOT a login shell, not a top-level shell.
+    # We can safely assume .bash_profile has already been run on an outer shell.
+    set -o nounset
+
+    source ~/.bash_profile.d/include/functions.sh
+
+    ${PROFILE_D_WRAPPER} __profile_load \
+        ~/.local/.bashrc.d/before \
+        ~/.bashrc.d \
+        ~/.local/.bashrc.d/after
+
+    set +o nounset
+fi
+
+##echo>&2 "EXIT  .bashrc"
+##set +o verbose
+##set +o xtrace
+

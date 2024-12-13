@@ -1,0 +1,414 @@
+﻿" Use Vim settings, rather then Vi settings (much better!).
+" This must be first, because it changes other options as a side effect.
+set nocompatible
+
+" Clear existing autocmds
+autocmd!
+
+"
+" Encoding settings
+" If all work correctly (and the condition is true), the following line should NOT have question marks:
+" tab=<	>, nbsp=< >
+"
+if has("multi_byte")
+    if &termencoding == ""
+        let &termencoding = &encoding
+    endif
+    set encoding=utf-8                " set first
+    scriptencoding utf-8              " so the SCRIPT is treated properly, which means non-ASCII/non-Latin1 codepoints are read correctly
+    setglobal fileencoding=utf-8
+    setglobal nobomb
+    set fileencodings=ucs-bom,utf-8,utf-16le,default,latin1
+endif
+
+" Determine OS.  This has to be next due to runtimepath issues in Windows.
+let g:os_type=""
+let g:os_subtype=""
+if has("win32unix") || has("win64unix")
+    " cdonnelly 2013-09-18: Cygwin 64 VIM as of 7.3.1314 reports as having win32unix, but not win64unix (a guess on my part)
+    let g:os_type="windows"
+    let g:os_subtype="unix"
+elseif has("win32") || has("win64")
+    let g:os_type="windows"
+elseif has("macunix")
+    let g:os_type="macosx"
+elseif has("unix")
+    let g:os_type="unix"
+endif
+
+if g:os_type == "windows" && g:os_subtype == ""
+    " I want ~/.vim, not ~/vimfiles like an animal. Use standard UNIX
+    set runtimepath=$HOME/.vim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,$HOME/.vim/after
+endif
+
+" Swapfiles: don't store in the current directory.
+set directory-=.
+if g:os_type == "windows" && g:os_subtype == ""
+    " Override temp dir.
+    " For some reason the default on Windows is directory=.;c:\tmp;c:\temp.
+    " While I do usually create c:\temp, it is stupid to rely on.
+    set directory=$TEMP
+endif
+
+" set up a plugin manager if it exists.
+" https://github.com/junegunn/vim-plug
+" cdonnelly 2015-10-02: note that Vim 7.0.237 (the one on RHEL 5) hangs when you attempt to the "pathogen" plugin manager.  Vim 7.2 and later don't seem to do this.
+if v:version >= 702
+    filetype off
+    call plug#begin()
+    source ~/.vim/plugins.vim
+    call plug#end()
+endif
+filetype plugin indent on
+
+" Settings
+set autoindent
+set backspace=indent,eol,start                               " Fix broken backspace in some setups.
+set backupcopy=yes                                           " see :help crontab
+set clipboard=unnamed                                        " yank and paste with the system clipboard
+set expandtab                                                " expand tabs to spaces
+set laststatus=2                                             " 0=never, 1=show statusline only when multiple exist, 2=always
+set list                                                     " show trailing whitespace
+set listchars=tab:▸\ ,trail:·,nbsp:▫                         " expose tabs, nbsps, trailing whitespace 
+set number                                                   " line numbers on left
+set ruler                                                    " show the cursor position all the time (even if scrollbar exists)
+set shiftwidth=4                                             " indent 4
+set showcmd
+set softtabstop=4                                            " indent 4
+set tabstop=4                                                " indent 4
+set viminfo='20,\"100                                        " read/write a .viminfo file, don't store more than 100 lines of registers
+set history=100                                              " keep 100 lines of command line history
+if has("patch-7.4.785")
+    set nofixeol                                             " stop adding eols to everything, we don't need it.
+endif
+
+set showmatch   " visually show where matching paren/bracket/curly brace/etc. is
+set nowrap
+
+" Shell: do not override.  Affects ! as well as invoking shell directly
+
+"
+" Search settings
+"
+set ignorecase          " case-insensitive search
+set smartcase           " case-insensitive when lowercase, uppercase is case-sensitive
+
+
+"
+" Diff settings
+"
+" cdonnelly 2022-10-21: Default is reasonable (filler) but needs tweaks.
+" Note += will cause repeated options unless += is done one at a time...
+set diffopt+=filler
+set diffopt+=vertical
+set diffopt+=iwhite
+set diffopt+=context:3
+if has("patch-8.1.0360")
+    " version that added internal support, and added internal to default.
+    set diffopt+=algorithm:patience
+endif
+
+
+"
+" File extension => type mappings
+"   - setf xxx          *conditionally* set filetype=xxx (if not set)
+"   - set filetype=xxx  unconditionally set filetype=xxx
+"
+augroup cdonnelly_fileext
+    " SQL
+    autocmd filetypedetect BufNewFile,BufRead *.sql                                             set filetype=plsql  " Universal
+    autocmd filetypedetect BufNewFile,BufRead *.prc;*.fnc;*.pks;*.pkb;*.trg;*.vw;*.tps;*.tpb    setf plsql  " Oracle (from TOAD)
+
+    " XML
+
+    " .NET / Visual Studio
+    autocmd filetypedetect BufNewFile,BufRead *.config                      setf xml    " .NET / Visual Studio
+    autocmd filetypedetect BufNewFile,BufRead *.csproj,*.dcproj,*.vbproj    setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.DotSettings                 setf resharper-xml
+    autocmd filetypedetect BufNewFile,BufRead *.props                       setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.runsettings                 setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.snippet                     setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.targets                     setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.vssettings                  setf xml
+    autocmd filetypedetect BufNewFile,BufRead *.vstemplate                  setf xml
+
+    " Log files
+    autocmd filetypedetect BufNewFile,BufRead *.log,*.log.*,*.log2*         setf log
+    autocmd filetypedetect BufNewFile,BufRead *.slnf                        setf json   " Solution Filter (since VS2019)
+
+    " Markdown -- MUST force filetype.
+    " @see https://stackoverflow.com/a/23279293/17152
+    autocmd filetypedetect BufNewFile,BufRead *.md                          set filetype=markdown
+
+    " Node.js
+    autocmd filetypedetect BufNewFile,BufRead *.npmrc                       setf dosini
+augroup END
+
+"
+" Additional file type config
+"
+augroup cdonnelly_filetype
+
+    " SQL -- treat all as PL/SQL (appears to be overridden by filetype)
+    "autocmd FileType sql let b:filetype_sql="plsql"
+
+    " Filetype indents
+    autocmd FileType xml setlocal tabstop=2 shiftwidth=2 softtabstop=2          " I prefer xml with 2 spaces
+    autocmd FileType markdown setlocal tabstop=2 shiftwidth=2 softtabstop=2     " The world seems to prefer markdown with 2 spaces
+
+    " cdonnelly 2013-11-13: pseudo-autochdir (since autochdir doesn't work with a lot of plugins)
+    " @see http://vim.wikia.com/wiki/Set_working_directory_to_the_current_file
+    autocmd BufEnter * silent! lcd %:p:h
+
+    " disable textwidth for these - for some reason vim sets it to 78 by default which is dumb
+    autocmd FileType text set textwidth=0
+    autocmd FileType vim  set textwidth=0
+
+    " cdonnelly 2019-06-24: Cake plugin for Vim sets tabstop to 2 (!)
+    autocmd FileType cake setlocal tabstop=4 shiftwidth=4 softtabstop=4
+
+    " Shell script: default to bash
+    autocmd FileType sh let b:is_bash = 1
+
+    autocmd FileType json if getfsize(expand('%')) > 104857600 | syntax off | endif
+
+    if has("folding") " view mode doesn't have folding
+        autocmd FileType c,cpp,cs,html,java,vim,xml set foldmethod=syntax
+        " cdonnelly 2015-01-13: By default all folds are closed, to open all you have to do it on BufRead
+        autocmd BufRead * normal zR
+    endif
+
+    " Special filetype handling
+    autocmd FileType log call s:OpenLogFile()
+augroup END
+
+" cdonnelly 2013-04-08: select like windows in gvim, even on mac
+if has("gui_running")
+    behave mswin
+
+    if g:os_type == "windows"
+        " gVim on Windows
+        " cdonnelly 2012-04-09: SERIOUSLY!?!?!? we don't do this by default?
+        source $VIMRUNTIME/mswin.vim
+
+        " Fix normal-mode CTRL-A so it works with left/right shift.
+        nnoremap <C-A> gggH<C-O>G<C-O>
+    endif
+
+    " guioptions:
+    "   - !: open external commands in a terminal in gVim.
+    "        (It's only 256 color but nicer than popping a separate window.)
+    "   - k: cdonnelly 2020-07-06: Do not move the window if I split/add a tab/etc.
+    "        It does this on Windows if docked, which is annoying.
+    :set guioptions+=k!
+endif
+
+"
+" Config functions
+"
+" ! makes function force reload
+" @see http://stackoverflow.com/questions/12100162/error-open-files-after-creating-vimrc
+
+" Open
+function! s:OpenLogFile()
+    let editargs = ''
+    if g:os_type == 'windows' && &fileformat == 'unix'
+        " Vim opens files as ff=unix if they have so much as 1 LF-terminated line out of 10,000.
+        " Naturally, on Windows we don't want that.
+        let editargs .= ' ++fileformat=dos'
+    endif
+
+    " For log files that are BOMless UTF-16, detect and open in a readable form.
+    " (Typically this is UTF-16LE on Windows, but should work anywhere.)
+    if !&bomb && (&fileencoding ==? 'utf-8')
+        "echo 'nobomb utf-8, investigate'
+        if search('^[^\x0][\x0]', 'w') > 0
+            "echo 'looks like utf-16le'
+            let editargs .= ' ++encoding=utf-16le'
+            "echo 'editargs now "' . editargs . '"'
+        elseif search('^[\x0][^\x0]', 'w') > 0
+            "echo 'looks like utf-16be'
+            let editargs .= ' ++encoding=utf-16be'
+            "echo 'editargs now "' . editargs . '"'
+        else
+            "echo 'looks like utf-8, doing nothing'
+        endif
+    else
+        "echo 'bomb'
+    endif
+
+    " If the overrides are set, reopen the file.
+    " Note this should execute at most once, as the reopened file should pass all the above checks.
+    if editargs != ''
+        "echo 'edit ' . editargs
+        execute 'edit' editargs
+    else
+        "echo 'editargs is empty'
+    endif
+
+endfunction
+
+"
+" Spell check
+"
+if has("spell")
+    set spelloptions+=camel
+
+    " Add a programming dictionary.
+    " (Woefully incomplete.)
+    if has_key(g:plugs, 'vim-dirtytalk')
+        " LATER: is there a better way of making soure vimrc reentrant with options?
+        set spelllang-=programming
+        set spelllang+=programming
+    endif
+endif
+
+
+"
+" UI Behavior
+"
+
+" cdonnelly 2014-04-24: Since mswin.vim overrides Ctrl+A and Ctrl+X, which do the very helpful increment/decrement respectively,
+" let's remap those to something else.
+noremap <A-a> <C-a>
+noremap <A-x> <C-x>
+
+set selection=exclusive
+set selectmode=
+
+let g:EnhCommentifyUseAltKeys = 'yes'
+let g:enhcommentifyalignright = 'yes'
+
+" Don't use Ex mode, use Q for formatting
+map Q gq
+
+" Make p in Visual mode replace the selected text with the "" register.
+vnoremap p <Esc>:let current_reg = @"<CR>gvdi<C-R>=current_reg<CR><Esc>
+
+" Font / color behavior / rendering
+if has("gui_running")
+    if g:os_type == "windows"
+
+        " Enable DirectX if possible.
+        " DirectX is necessary for fonts with ligatures, like Fira Code.
+        if has("patch-8.1.982")
+            " First version OK with DirectX is (8.1.172, 8.1.982].
+            set renderoptions=type:directx
+            set guifont=CaskaydiaCove_NFM:h11,Cascadia_Mono:h11,Fira_Code_Retina:h10,Consolas:h10,Courier_New:h10
+        else
+            " Technically Vim 8.0+ can use DirectX for rendering but:
+            "   - it is slower (confirmed [8.0.0896, 8.0.1216], [8.1.0, 8.1.172]
+            "   - Font alignment is a bit wonky when colors differ (e.g., selected text)
+            " Use Consolas for these.
+            set renderoptions=
+            set guifont=CaskaydiaCove_NFM:h11,Cascadia_Mono:h11,Consolas:h10,Courier_New:h10
+        endif
+
+        " Turn on lazyredraw.
+        " LATER: enable for other OS types, but validate them first
+        set lazyredraw
+
+    elseif g:os_type == "macosx"
+        " cdonnelly 2015-03-07 (updated 2017-09-12):
+        " AppleCrap/MSCRAP: As of OSX 10.10 (Yosemite) / Office 2011, Microsoft fonts render smaller due to DPI differences.
+        " This wasn't the case in 10.9 (Mavericks), so AppleCrap.
+        " But Microsoft could theoretically use adjusted versions of its fonts on OS X, *and* is *known* to adjust its fonts at @1x DPI on Windows, so MSCRAP.
+        "
+        " Just going with Menlo for now since it works.
+        " @see http://arstechnica.com/civis/viewtopic.php?t=1126246
+        set guifont=Menlo:h11,Monaco:h11
+    else
+        set guifont=CaskaydiaCove_NFM:h11,Cascadia_Mono:h11,Consolas:h10,Menlo:h11,Courier\ New:h10,-misc-fixed-medium-r-normal-*-*-120-*-*-c-*-iso8859-15
+        let Tlist_Ctags_Cmd = '/usr/bin/ctags'
+    endif
+    let &guifontwide=&guifont
+
+elseif has("termguicolors")
+    " terminal, since 7.4.1799
+    " ASSUMPTION: we're in a sane terminal.  (ConEmu + WSL is sane.  ConEmu on native Windows isn't.)
+    set termguicolors
+endif
+
+"
+" Tabbed editing
+""
+" cdonnelly 2017-05-12: Ctrl-Tab in gVim (Windows) already tabs between panes in the existing window, though Ctrl-Shift-Tab does not.
+" I still want Ctrl+T to do new tabs, though.
+if v:version >= 700
+    " ctrl+t => new tab
+    map <C-T>           :tabnew<CR>
+
+    " alt+ctrl+right (note: f**k pepe)
+    map <M-C-Right>     :tabnext<CR>
+    lmap <M-C-Right>    :tabnext<CR>
+    map <M-C-Left>      :tabprevious<CR>
+    lmap <M-C-Left>     :tabprevious<CR>
+
+    " These don't work
+    "map <C-}>   :tabnext<CR>
+    "map <C-S-]>   :tabnext<CR>
+    "map <C-{>   :tabprevious<CR>
+
+    " Ctrl+F4 is already mapped in Windows gVim.  Unsure of other places
+endif
+
+" Color and syntax highlighting: use if GUI or terminal has colors
+if &t_Co > 2 || has("gui_running")
+    syntax on
+    set hlsearch    " Also switch on highlighting the last used search pattern.
+
+    try
+        colorscheme codedark    " NOTE: codedark will only work once PlugInstall has been run.
+    catch /^Vim\%((\a\+)\)\=:E185/
+        colorscheme default
+    endtry
+
+    if has("gui_running") && &background ==# 'dark'
+        " Use dark theme variant if available. (Only works in GTK as of 2021-12-21)
+        set guioptions+=d
+    endif
+endif
+
+
+"
+" Status line
+"
+
+function! SyntaxItem()
+    return synIDattr(synID(line("."),col("."),1),"name")
+endfunction
+
+if has('statusline')
+    set statusline=
+    set statusline+=%3.3n\ \                            " buffer number
+    set statusline+=%-10.80f\ \                         " file name
+    set statusline+=%{(&fenc==\"\"?&enc:&fenc)}         " encoding
+    set statusline+=%{((exists(\"+bomb\")\ &&\ &bomb)?\"\ \ bom\":\"\")} " BOM
+    set statusline+=\ \|\                               " separator
+    set statusline+=%{&fileformat}                      " file format
+    set statusline+=\ \|\                               " separator
+    set statusline+=%{strlen(&ft)?&ft:'none'}           " file type
+    set statusline+=\ \|\                               " separator
+    set statusline+=%{&spelllang}                       " language of spelling checker
+    set statusline+=\ \|\                               " separator
+    set statusline+=%h%m%r%w                            " flags
+    set statusline+=%=                                  " ident to the right
+    set statusline+=%{SyntaxItem()}\ \                  " syntax highlight group under cursor
+    set statusline+=0x%-8B\                             " character code under cursor
+    set statusline+=%-7.(%l,%c%V%)\ %<%P                " cursor position/offset
+    set statusline+=\                                   " extra space
+
+endif
+
+" Other includes
+source ~/.vim/regexlist.vim
+
+"
+" Local .vimrc overrides
+"
+let $local_vimrc = expand("~/.local/.vimrc")
+if filereadable($local_vimrc)
+    source $local_vimrc
+endif
+
+":vim: textwidth=0 :

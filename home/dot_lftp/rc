@@ -1,0 +1,7 @@
+#set ftp:sync-mode off
+#
+set ftp:passive-mode true
+
+# Mirror rules
+set mirror:parallel-directories true
+set mirror:parallel-transfer-count 10 

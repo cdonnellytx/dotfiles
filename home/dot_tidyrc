@@ -1,0 +1,10 @@
+add-xml-decl: yes
+error-file: /dev/null
+indent-attributes: yes
+indent-spaces: 4
+indent: auto
+numeric-entities: yes
+output-encoding: utf8
+output-xhtml: yes
+tidy-mark: no
+wrap: 132

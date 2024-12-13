@@ -1,0 +1,8 @@
+@echo off
+REM Install PowerShell (modern) on Windows.
+REM
+
+REM this is so annoying.
+{{if not (lookPath "pwsh") }}
+winget install --source "msstore" --id 9mz1snwt0n5d --silent --accept-package-agreements --accept-source-agreements
+{{end}}

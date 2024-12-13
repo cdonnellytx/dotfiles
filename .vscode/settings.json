@@ -1,0 +1,17 @@
+{
+  "files.associations": {
+    "**/.bash*.d/**/*.conf": "shellscript",
+    "**/*.omp.json": "jsonc",
+    "**/.magic.d/**/*": "properties",
+    "config": "properties",
+    "*.toml.tmpl": "toml",
+    ".chezmoiignore": "ignore",
+    ".chezmoiignore.tmpl": "gotmpl",
+    "*.cmd.tmpl": "bat"
+  },
+  "gopls": {
+    // GCRAP: For some stupid reason gopls does not default to syntax highlighting being on.
+    // Including this here to explicitly remind me that this is a thing I have to do, in case there's some reason I have to turn it off globally later...
+    "ui.semanticTokens": true
+  }
+}

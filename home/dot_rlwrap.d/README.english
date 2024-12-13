@@ -1,0 +1,98 @@
+This is rlwrap_extension Version 0.04 for Oracle 12.1.0.2
+You should have those files:
+
+sql+			-- a wrapper script for sqlplus
+asm+			-- a wrapper script for asmcmd
+README			-- German README
+README.english		-- This file
+adrci			-- keyword list for adrci
+asmcmd			-- keyword list for asmcmd
+dgmgrl			-- keyword list for dgmgrl
+rman			-- keyword list for Recovery Manager
+sqlplus.all		-- keyword list for ALL_* Views
+sqlplus.cdb		-- keyword list for CDB_* Views
+sqlplus.dba		-- keyword list for DBA_* Views
+sqlplus.gvdollar	-- keyword list for GV$* Views
+sqlplus.init		-- keyword list for documented Instance parameters
+sqlplus._init		-- keyword list for undocumented Instance parameters
+sqlplus			-- keyword list for sqlplus
+sqlplus.packages	-- keyword list for all other packages
+sqlplus.rman		-- keyword list for RMAN Catalog Views RC_* 
+sqlplus.tables		-- keyword list for miscellaneous Tables
+sqlplus.user		-- keyword list for USER_* Views
+sqlplus.vdollar		-- keyword list for V$* Views
+
+sqlplus*, rman, adrci and asmcmd should go to /usr/local/share/rlwrap or wherever rlwrap
+will search for its shared files. If in doubt, try it or RTFM.
+
+sql+ and asm+ belong to /usr/local/bin or any directory in your PATH
+
+calling sql+ without parameter will result in
+
+rlwrap ... sqlplus / as sysdba 
+or
+rlwrap ... sqlplus / as sysasm
+
+depending if ORACLE_SID starts with a '+', in any other case it 
+passes its parameters to sqlplus (called with rlwrap)
+
+sql+ uses case insensitive name completion supplied by rlwrap since version 0.24 
+and uses nearly all supplied keyword files (thoses starting with sqlplus, except sqlplus.rman).
+
+That's it
+
+Feel free to use it, it's public domain. 
+
+CHANGELOG
+=========
+12c
+0.04
+ - check for $ORACLE_HOME in sql+ und asm+
+ - sqlplus.functions extended
+
+V0.03
+- added many 12.1.0.2 view- and parameter names
+- fixed headline for this file
+
+V0.02
+- minor fixes
+- included keyword file dgmgrl
+
+V0.01
+- adapted most files to 12.1.0
+- created file sqlplus.cdb (new class of views in 12c)
+
+11g:
+V0.05
+- adapted most files to 11.2.0.3
+- keyword file for asmcmd including all --parameters
+- new script asm+ to take full advantage of new keyword file (this actually could also be an alias instead)
+- simplified version of sql+: no distinction anymore metween sys or non sys connects,
+  but distinguish between connects to ASM (as sysasm) and database instance (as sysdba) when
+  invoked without parameters
+
+V0.04
+- deleted erroneous entries in sqlplus.user and sqlplus.all
+
+V0.03
+- merged the difference between DICT and DBA_VIEWS into sqlplus.dba, sqlplus.all
+  and sqlplus.user
+  36 view names DBA_* are in DBA_VIEWS but not in DICT (at least on a 11.1.0),
+  same applies to USER_* (68 missing) and ALL_* (64).
+  try the following:
+  SELECT view_name FROM dba_views WHERE view_name LIKE 'ALL\_%' ESCAPE '\'
+     MINUS
+  SELECT table_name FROM dict WHERE table_name LIKE 'ALL\_%' ESCAPE '\';
+
+V0.02:
+- added keyword list for adrci 
+
+V0.01:
+- first public version
+
+DISCLAIMER:
+Use it at your own risk. The author does not take any liability
+for any possible damage caused by use of these files.
+
+Johannes Gritsch
+22-Aug-2007

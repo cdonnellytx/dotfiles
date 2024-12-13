@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+#
+# Author: Todd Larason <jtl@molehill.org>
+# $XFree86: xc/programs/xterm/vttests/256colors2.pl,v 1.2 2002/03/26 01:46:43 dickey Exp $
+
+# use the resources for colors 0-15 - usually more-or-less a
+# reproduction of the standard ANSI colors, but possibly more
+# pleasing shades
+
+set -eu
+
+if ! command -v tput > /dev/null ; then
+    die "tput not found, please install ncurses (or ncurses-bin)."
+fi
+
+# The width of the true color swatch to print.
+width="${1:-$(tput cols)}"
+color_depth="$(tput colors)"
+
+csi=$(echo -e '\e')
+
+declare color_reset="${csi}[0m"
+
+function write-color-reset() {
+    echo ${color_reset}
+}
+
+function write-256-color-swatch() {
+    declare -i color="${1?No color specified}"
+
+    printf "${csi}[48;5;%sm  " "${color}"
+}
+
+function write-system-colors() {
+    echo "System colors:"
+
+    for ((color=0; $color < 8; color++)); do
+        write-256-color-swatch $color
+    done
+
+    echo ''
+
+    for ((color=8; $color < 16; color++)); do
+        write-256-color-swatch $color
+    done
+
+    write-color-reset
+
+    echo ''
+}
+
+# colors 16-231 are a 6x6x6 color cube
+function write-256-colors() {
+    echo "Color cube, 6x6x6:"
+
+    local -i green red blue color
+    for ((green = 0; $green < 6; green++)); do
+        for ((red = 0; $red < 6; red++)); do
+            for ((blue = 0; $blue < 6; blue++)); do
+                color=$((16 + ($red * 36) + ($green * 6) + $blue))
+                write-256-color-swatch $color
+            done
+        done
+        write-color-reset
+    done
+}
+
+function write-true-color() {
+    local -i width="${1?No width specified}"
+
+    echo -n "True color test:"
+    if [[ ${color_depth} < 24 ]] ; then
+        echo -n " (NOTE: this may fail)"
+    fi
+    echo ''
+
+    local str='/\'
+    local -i r g b
+    local bg fg
+
+    for ((colnum=0; $colnum < $width; colnum++)); do
+        r=$((255 - ($colnum * 255 / $width)))
+        g=$(($colnum*510/$width))
+        b=$(($colnum*255/$width))
+        [[ $g -gt 255 ]] && g=$((510-$g))
+
+        bg="${csi}[48;2;${r};${g};${b}m"
+        fg="${csi}[38;2;$((255-$r));$((255-$g));$((255-$b))m"
+        index="$(($colnum % ${#str}))"
+        s="${str:${index}:1}"
+
+        printf "%s%s%s%s" $bg $fg $s $color_reset
+    done
+
+    write-color-reset
+}
+
+# colors 232-255 are a grayscale ramp, intentionally leaving out
+# black and white
+function write-grayscale() {
+    echo "Grayscale ramp:";
+    for ((color=232; $color < 256; color++)); do
+        write-256-color-swatch $color
+    done
+
+    write-color-reset
+    echo ''
+}
+
+# display the colors
+write-system-colors
+write-256-colors
+write-grayscale
+
+write-true-color $width

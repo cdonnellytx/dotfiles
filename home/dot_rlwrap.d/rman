@@ -1,0 +1,33 @@
+abort advise after algorithm allocate allow alter analyze archivelog append applied area associate
+audit autobackup auxiliary auxname available
+backed backup backups backuppiece backupset before begin between block blockrecover
+call catalog change channel check clear command comment commit completed configure connect controlfile 
+controlfilecopy convert copies compressed copy corruption create
+crosscheck cumulative current
+datafile datafilecopy database datafile datapump days dbid db_file_name_convert
+db_name db_recovery_file_dest db_unique_name decryption declare delete deletion describe
+destination device disassociate disk directory diskratio dorecover drop dump duplicate duration
+echo encryption exclude execute exit expired explain export
+failure file files filesperset flashback force foreign forever format from full
+global grant group
+host
+identified immediate import inaccessible incarnation include
+including incremental input insert instance
+keep
+level like list load lock logfile logical logs
+maintenance maxcorruption maxdays maxopenfiles maxpiecesize maxseq maxsetsize maxsize
+merge minimize mount
+name names need newname noaudit nochecksum noduplicates noexclude nofilenamecheck
+nokeep nologs nomount noparallel noprompt noredo normal notableimport
+obsolete offline only open optimization
+parallel parameter parallelism parms partial pfile plan platform pluggable plus
+point pool policy preview print proxy purge
+quit
+rate readonly recover recoverable recovery redundancy register release remap rename repair replace report
+reset resetlogs restore restricted resync retention revoke reuse root
+script schema section send sequence service show shutdown since size skip snapshot
+spfile spool standby start startup statistics summary switch
+table target tempfile test thread time times tablespace transactional transport type
+unavailable uncatalog undo unrecoverable unregister until upgrade using
+validate virtual
+window with

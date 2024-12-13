@@ -1,0 +1,60 @@
+#
+# .bash_profile
+#
+# Called on login shells.
+#
+
+##echo>&2 "ENTRY .bash_profile"
+##set -o verbose
+##set -o xtrace
+##export PROFILE_D_VERBOSE=1
+##export PROFILE_D_TIMING=1
+
+# Functions
+declare -i start_time="$(date +%s%N)"
+
+# cdonnelly 2021-04-13:
+## cdonnelly 2018-03-09: Some embedded Linux systems source bashrc from /bin/sh, and may source .bash_profile. Don't do that.
+# if [ "${SHELL}" == "/bin/sh" ] ; then
+#     echo >&2 ".bash_profile: nope, shell is $SHELL"
+#     return 1
+# fi
+
+set -o nounset
+
+source ~/.bash_profile.d/include/functions.sh
+
+# Ensure OS state is loaded
+__profile_load_osinfo
+
+# Run .bash_profile scripts.
+# .bashrc is not run if .bash_profile is run, so run its configs (interactive only)
+declare -a profile_paths=(
+    ~/.local/.bash_profile.d/before
+    ~/.bash_profile.d
+    ~/.local/.bash_profile.d/after
+)
+
+if [[ ${os_interactive} -ne 0 ]] ; then
+    # We were not called from .bashrc and need to run it.
+    profile_paths+=(
+        ~/.local/.bashrc.d/before
+        ~/.bashrc.d
+        ~/.local/.bashrc.d/after
+    )
+fi
+
+${PROFILE_D_WRAPPER} __profile_load "${profile_paths[@]}"
+
+# Powershell-like timing FTW (interactive)
+if [ ${os_interactive} -ne 0 ] ; then
+    declare -i end_time="$(date +%s%N)"
+    echo >&2 "Loading personal and system profiles took $(((end_time-start_time)/1000000))ms."
+fi
+unset start_time end_time profile_paths
+
+set +o nounset
+
+##echo>&2 "EXIT  .bash_profile"
+##set +o verbose
+##set +o xtrace

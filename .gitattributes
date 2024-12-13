@@ -1,0 +1,7 @@
+# Default files to LF since files w/o extensions are probably shell scripts.
+*  text eol=lf
+
+# Windows
+*.bat   text eol=crlf -crlf
+*.ps1   text=auto
+

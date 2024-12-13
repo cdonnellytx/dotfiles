@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# Shows you the largest objects in your repo's pack file.
+# @see http://stubbisms.wordpress.com/2009/07/10/git-script-to-show-largest-pack-objects-and-trim-your-waist-line/
+# @author Antony Stubbs
+# @author Chris R. Donnelly
+
+readonly bindir=$(dirname "$0")
+readonly scriptname=$(basename "$0")
+readonly basedir="$(readlink -f "${bindir}/..")"
+readonly libdir="${basedir}/lib"
+source "${libdir}/commons/functions.sh"
+
+####################################################################################################################################
+
+write_line() {
+    printf "%7s %7s  %-40s  %s\n" "$@"
+}
+
+####################################################################################################################################
+# Options
+####################################################################################################################################
+
+declare -ir default_num_lines=10
+declare -r default_sort_field=size
+
+declare -i opt_num_lines=${default_num_lines}
+declare -i opt_sort_index
+
+parse_options() {
+    local getopt=`getopt -o "hn:s:" --long "help,lines:,sort:" \
+        -n $(basename "$0") -- "$@"`
+    [ $? != 0 ] && die "Terminating..."
+
+    # Note the quotes around the variable: they are essential!
+    eval set -- "${getopt}"
+
+    declare opt_sort_field="${default_sort_field}"
+    while [ $# -gt 0 ]; do
+        local -i invariant=$#
+
+        case "$1" in
+            -n | --lines)
+                opt_num_lines="$2"
+                shift 2
+                ;;
+
+            -s | --sort)
+                opt_sort_field="${2:?You must specify a sort field}"
+                shift 2
+                ;;
+
+            -h | --help )
+                usage
+                exit 0
+                ;;
+
+            # catchalls
+            --) shift ; break ;;        # end of options
+            *)  break ;;
+        esac
+
+        [ $# -eq $invariant ] && die "didn't shift args in $1 did you?"
+    done
+
+    # need sort index for git verify-pack
+    case "${opt_sort_field,,}" in
+        s|size)
+            opt_sort_index=3
+            ;;
+        p|pack)
+            opt_sort_index=4
+            ;;
+        sha)
+            opt_sort_index=1
+            ;;
+        *)
+            croak "You must specify a valid sort field: size, pack, sha"
+            ;;
+    esac
+
+    readonly opt_num_lines opt_sort_index
+}
+
+croak() {
+    die -e "$@\nTry \`$(basename "${0}") --help\` for more information."
+}
+
+usage() {
+    cat <<EOT
+Usage: $(basename "$0") [OPTION]...
+Shows you the largest objects in your repo's pack file.
+
+Options
+  -n, --lines=NUM               print the first NUM lines (default is ${default_num_lines})
+  -h, --help                    prints this help message
+      --sort=FIELD              sort by this filed (default is ${default_sort_field})
+
+EOT
+}
+
+####################################################################################################################################
+# Main
+####################################################################################################################################
+
+main() {
+    declare git_root=$(git rev-parse --show-toplevel)
+    cd "${git_root}"
+
+    # list all objects including their size, sort by size, take top 10
+    declare -a objects
+    mapfile -t objects < <(
+        git verify-pack -v .git/objects/pack/pack-*.idx |
+            grep -v chain |
+            grep -Pv ': (bad|ok)$' |
+            grep -Pv '^non delta: ' |
+            sort -k${opt_sort_index}nr |
+            head --lines=${opt_num_lines}
+    )
+    if [ ${#objects[@]} -eq 0 ] ; then
+        exit 1
+    fi
+
+    #echo "The pack column is the size of the object, compressed, inside the pack file."
+
+    write_line Size Pack SHA Location
+    for y in "${objects[@]}"; do
+        declare -a object=($y)
+        # extract the size in bytes
+        size=$(format_bytes ${object[2]})
+        # extract the compressed size in bytes
+        compressedSize=$(format_bytes ${object[3]})
+        # extract the SHA
+        sha="${object[0]}"
+        # find the objects location in the repository tree
+        other=$(git rev-list --all --objects | grep $sha | cut -f2- -d ' ')
+        write_line ${size} ${compressedSize} "${sha}" "${other}"
+    done
+}
+
+parse_options "$@"
+main

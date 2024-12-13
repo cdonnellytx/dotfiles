@@ -1,0 +1,6 @@
+# Macro to print an object's retain count
+# @see http://www.cocoadev.com/index.pl?DebuggingAutorelease
+define rc
+call (NSUInteger)[($arg0) retainCount]
+end
+

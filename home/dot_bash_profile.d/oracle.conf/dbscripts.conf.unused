@@ -1,0 +1,15 @@
+#
+# Path for database-related scripts
+#
+
+declare dir
+for dir in ~/apps/dbscripts ; do
+    if [ -d "${dir}" ] ; then
+        export PATH="${PATH}:${dir}"
+        if [ -d "${dir}/bin" ] ; then
+            export PATH="${PATH}:${dir}/bin"
+        fi
+        export WHICHDB_CONF="${dir}/conf/whichdb-dev.properties"
+    fi
+done
+
