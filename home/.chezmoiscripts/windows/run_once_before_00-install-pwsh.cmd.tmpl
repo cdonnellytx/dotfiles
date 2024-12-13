@@ -1,8 +1,11 @@
 @echo off
-REM Install PowerShell (modern) on Windows.
-REM
-
-REM this is so annoying.
+::
+:: Install PowerShell (modern) on Windows.
+::
+:: We cannot use a PowerShell script to do it because we have mapped PowerShell scripts on Windows to pwsh.exe, not powershell.exe.
+:: Moreover, an alternate file extension doesn't work, because however Chezmoi invokes programs, Windows tries to open the file as an unknown extension (suggesting Notepad among others).
+:: So we're left with batch files.
+::
 {{if not (lookPath "pwsh") }}
 winget install --source "msstore" --id 9mz1snwt0n5d --silent --accept-package-agreements --accept-source-agreements
 {{end}}
