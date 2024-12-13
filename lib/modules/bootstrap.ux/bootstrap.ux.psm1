@@ -1,4 +1,4 @@
-#requires -version 7.0
+#requires -version 7 -modules Microsoft.PowerShell.Utility
 
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
@@ -68,3 +68,81 @@ function Write-Progress
     # Because the progress bar seems wonky, do an immediate short sleep.
     Start-Sleep -Milliseconds 1
 }
+
+<#
+.SYNOPSIS
+Writes an information header.
+#>
+function Write-Header
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Position = 0, Mandatory)]
+        [object] $Object
+    )
+
+    # NOTE: we don't have new-text.  Write ANSI directly
+    $msg = "`e[97m${Object}`e[0;0m"
+
+    Write-Information -MessageData $msg
+}
+
+function Write-Operation
+{
+    param
+    (
+        $Object
+    )
+
+    Write-Information -MessageData $Object
+}
+
+function Write-Result
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Position = 0, Mandatory, ParameterSetName = 'Object')]
+        [ValidateNotNullOrEmpty()]
+        $Object,
+
+        [Parameter(Mandatory, ParameterSetName = 'Error')]
+        [Alias('Error')]
+        $Err,
+
+        [Parameter(Mandatory, ParameterSetName = 'LastExitCode')]
+        $LastExitCode
+    )
+
+    $msg = switch ($PSCmdlet.ParameterSetName)
+    {
+        'Object'
+        {
+            Out-String -InputObject $Object
+        }
+        'Error'
+        {
+            if ($Err)
+            {
+                Write-Error $Err
+                return 'FAILED'
+            }
+            else
+            {
+                return 'OK'
+            }
+        }
+        'LastExitCode'
+        {
+            switch ($LastExitCode)
+            {
+                0 { "OK" }
+                default { "FAILED" }
+            }
+        }
+    }
+
+    Write-Information -MessageData "------------> ${msg}"
+}
+

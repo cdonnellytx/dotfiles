@@ -1,4 +1,4 @@
-#requires -Version 7 -Modules Microsoft.PowerShell.PSResourceGet
+#requires -Version 7 -Modules Microsoft.PowerShell.PSResourceGet, bootstrap.ux
 
 [CmdletBinding(SupportsShouldProcess)]
 param()
