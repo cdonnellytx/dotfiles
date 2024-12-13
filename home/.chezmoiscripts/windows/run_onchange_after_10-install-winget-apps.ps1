@@ -1,8 +1,9 @@
 #requires -Version 7 -modules Microsoft.WinGet.Client, bootstrap.ux
-[CmdletBinding(SupportsShouldProcess)]
-param()
 
 using namespace Microsoft.WinGet.Client.PSObjects
+
+[CmdletBinding(SupportsShouldProcess)]
+param()
 
 $PSDefaultParameterValues['Get-WinGetPackage:MatchOption'] = 'Equals'
 $PSDefaultParameterValues['Install-WinGetPackage:WhatIf'] = $WhatIfPreference
