@@ -12,6 +12,7 @@ if ($Env:CHEZMOI_VERBOSE -eq 1)
 
 class WinGetItemBase
 {
+    [string] $Scope = 'UserOrUnknown'
 }
 
 # Sourced from WinGet explicitly
