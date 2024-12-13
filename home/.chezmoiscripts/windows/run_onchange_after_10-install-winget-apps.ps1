@@ -2,6 +2,8 @@
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
+using namespace Microsoft.WinGet.Client.PSObjects
+
 $PSDefaultParameterValues['Get-WinGetPackage:MatchOption'] = 'Equals'
 $PSDefaultParameterValues['Install-WinGetPackage:WhatIf'] = $WhatIfPreference
 if ($Env:CHEZMOI_VERBOSE -eq 1)
@@ -12,7 +14,7 @@ if ($Env:CHEZMOI_VERBOSE -eq 1)
 
 class WinGetItemBase
 {
-    [string] $Scope = 'UserOrUnknown'
+    [PSPackageInstallScope] $Scope = 'UserOrUnknown'
 }
 
 # Sourced from WinGet explicitly
@@ -80,7 +82,12 @@ $apps = @(
     # Firefox from MS Store currently fails to launch URLs from elevated processes when the machine defaults to launching as not elevated.
     #   - Windows 10 21H1 10.0.19043.1348
     #   - Firefox 94.0.2
-    [WinGetItem]::new('Mozilla.Firefox')
+    # Additionally, installing as user is undesirable for two reasons:
+    #   - Home: I want all users
+    #   - There's some sort of wonky difference (it's labeled as Mozilla-MSIX installed).
+    [WinGetItem] @{
+        Id = 'Mozilla.Firefox'
+        Scope = 'System'
 )
 
 $installedApps = $apps | Get-WinGetPackage -MatchOption:Equals
