@@ -10,6 +10,7 @@ param()
     @{ Id = '9p7knl5rwt25'; Source = 'msstore'; Description = "Sysinternals Suite" }
 
     'AgileBits.1Password'
+    'Git.Git'
     'Microsoft.WindowsTerminal'
     'Mozilla.Firefox'
 ) | Install-ViaWinGet @PSBoundParameters -InformationAction:Continue
