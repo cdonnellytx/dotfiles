@@ -122,7 +122,7 @@ function Exit-Operation
         'OK' { $okResult }
         'Object'
         {
-            '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject)
+            '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject -NoNewline)
         }
         'Error'
         {

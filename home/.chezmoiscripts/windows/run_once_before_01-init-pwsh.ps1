@@ -12,11 +12,6 @@ function Confirm-PSResourceRepositoryTrusted
         [string[]] $Name
     )
 
-    begin
-    {
-        Write-Header "Confirm trusted PSResourceRepository"
-    }
-
     process
     {
         Get-PSResourceRepository -Name:$Name | ForEach-Object {

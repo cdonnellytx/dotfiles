@@ -3,7 +3,6 @@
 param()
 
 Set-StrictMode -Version Latest
-Write-Header "oh my posh"
 
 Enter-Operation "Set POSH_THEME"
 if ($PSCmdlet.ShouldProcess("Set POSH_THEME"))
