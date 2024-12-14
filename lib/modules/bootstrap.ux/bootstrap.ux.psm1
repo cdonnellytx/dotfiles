@@ -109,7 +109,7 @@ function Exit-Operation
         [Parameter(Position = 0, ParameterSetName = 'Object')]
         $InputObject,
 
-        [Parameter(Mandatory, ParameterSetName = 'Error')]
+        [Parameter(Mandatory, ParameterSetName = 'Error', ValueFromPipeline)]
         [Alias('Error')]
         $Err,
 
@@ -117,35 +117,38 @@ function Exit-Operation
         $LastExitCode
     )
 
-    $msg = switch ($PSCmdlet.ParameterSetName)
+    process
     {
-        'OK' { $okResult }
-        'Object'
+        $msg = switch ($PSCmdlet.ParameterSetName)
         {
-            '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject -NoNewline)
-        }
-        'Error'
-        {
-            if ($Err)
+            'OK' { $okResult }
+            'Object'
             {
-                Write-Error $Err
-                return $failedResult
+                '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject -NoNewline)
             }
-            else
+            'Error'
             {
-                return $okResult
+                if ($Err)
+                {
+                    Write-Error $Err
+                    return $failedResult
+                }
+                else
+                {
+                    return $okResult
+                }
+            }
+            'LastExitCode'
+            {
+                switch ($LastExitCode)
+                {
+                    0 { return $okResult }
+                    default { return $failedResult }
+                }
             }
         }
-        'LastExitCode'
-        {
-            switch ($LastExitCode)
-            {
-                0 { return $okResult }
-                default { return $failedResult }
-            }
-        }
-    }
 
-    Write-Output $msg
+        Write-Output $msg
+    }
 }
 

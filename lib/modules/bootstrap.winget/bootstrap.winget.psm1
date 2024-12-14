@@ -390,18 +390,17 @@ function Install-ViaWinGet
 
         # #endregion Arguments
 
+        Enter-Operation "Installing ${InputObject}"
+
         # WinGet install wrapper.
         # Be warned that `winget.exe install` (and Install-WinGetPackage) always installs certain apps, like Dropbox, so we have to test for its existence first.
         if (!$Force -and ($result = $InputObject | Get-WinGetPackage -MatchOption:$MatchOption -ErrorAction:Stop))
         {
+            Exit-Operation "v$($result.InstalledVersion) was already installed"
+
             if ($DebugPreference)
             {
                 Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name): CALL Get-WinGetPackage`nINPUT:`n$($InputObject | Out-String)OUTPUT:`n$($result | Out-String)"
-            }
-
-            if ($InformationPreference)
-            {
-                Write-Information -Tags 'winget' "Skipping ${InputObject} (v$($result.InstalledVersion) installed)"
             }
 
             if ($PassThru)
@@ -437,16 +436,19 @@ function Install-ViaWinGet
         switch ($result.Status)
         {
             # We're good.
-            'Ok' {}
+            'Ok'
+            {
+                Exit-Operation
+            }
 
             'NoApplicableInstallers'
             {
-                Write-Error -Category NotEnabled -Message "Scope '$($InputObject.Scope)' is not supported for this application."
+                Write-Error -Category NotEnabled -Message "Scope '$($InputObject.Scope)' is not supported for this application." 2>&1 | Exit-Operation
             }
 
             'InstallError'
             {
-                Write-Error -Category InvalidResult -Message "Install failed: $($result.ExtendedErrorCode)"
+                Write-Error -Category InvalidResult -Message "Install failed: $($result.ExtendedErrorCode)" 2>&1 | Exit-Operation
             }
 
             default
@@ -461,17 +463,16 @@ function Install-ViaWinGet
                         {
                             Start-Process "ms-windows-store://pdp/?ProductId=$($InputObject.Id)"
                         }
-                        Write-Error -Category NotImplemented -Message "Installing from the Microsoft Store currently only works for Apps that are `"Free`" and rated `"e`" for everyone."
+                        Write-Error -Category NotImplemented -Message "Installing from the Microsoft Store currently only works for Apps that are `"Free`" and rated `"e`" for everyone." 2>&1 | Exit-Operation
                         return
                     }
 
                     default
                     {
-                        Write-Error -Category InvalidResult -Message ('winget exited with code {0:X8}: {1}' -f $_, $result.ExtendedErrorCode)
+                        Write-Error -Category InvalidResult -Message ('winget exited with code {0:X8}: {1}' -f $_, $result.ExtendedErrorCode) 2>&1 | Exit-Operation
                     }
                 }
             }
-
         }
 
         if ($PassThru)
