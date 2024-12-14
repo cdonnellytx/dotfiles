@@ -95,7 +95,9 @@ function Enter-Operation
         [string] $Name
     )
 
-    Write-Host -NoNewline ("{0,-60}" -f "${Name}`u{2026}")
+    $padding = $host.UI.RawUI.WindowSize.Width -ge 110 ? 100 : 60
+
+    Write-Host -NoNewline ("${Name}`u{2026}".PadRight($padding))
 }
 
 $okResult     = "[  `e[32mOK`e[0m  ]"

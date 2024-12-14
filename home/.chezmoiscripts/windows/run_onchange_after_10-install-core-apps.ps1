@@ -14,5 +14,3 @@ param()
     'Microsoft.WindowsTerminal'
     'Mozilla.Firefox'
 ) | Install-ViaWinGet @PSBoundParameters -InformationAction:Continue
-
-
