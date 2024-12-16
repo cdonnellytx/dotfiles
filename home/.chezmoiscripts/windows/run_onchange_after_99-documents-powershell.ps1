@@ -4,13 +4,15 @@ using namespace System.IO
 
 <#
 .SYNOPSIS
-Modify default profile locations to call the shared profile in this repository.
+Modify Windows' default profile locations to call the shared profile in the Unix home directory (~/.config/powershell).
 
 .PARAMETER ConfigPath
 The path to the PowerShell "config" directory:
 - ~/.config/powershell          Unix (and my profile)
 - $DOCUMENTS\PowerShell         Windows (6.0+)
 - $DOCUMENTS\WindowsPowerShell  Windows (< 6.0)
+
+This creates stub profile.ps1 files in the two Windows directories to use the shared canonical versions.
 
 .NOTES
 Because Documents is typically absorbed into OneDrive or similar now, we cannot rely on symlinks.
