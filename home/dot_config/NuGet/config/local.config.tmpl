@@ -1,0 +1,13 @@
+﻿{{- $localPath := joinPath .chezmoi.homeDir ".local/nuget-packages-dev" -}}
+{{- if (stat "D:\\") -}}
+{{-   $localPath = "D:\\NuGetPackagesDev\\" -}}
+{{- end -}}
+
+{{- if (stat $localPath) -}}
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="Local" value="{{ $localPath }}" />
+  </packageSources>
+</configuration>
+{{- end -}}

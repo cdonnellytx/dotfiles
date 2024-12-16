@@ -7,7 +7,8 @@
     ".chezmoiignore": "ignore",
     "*.cmd.tmpl": "bat",
     "*.ps1.tmpl": "powershell",
-    "*.toml.tmpl": "toml"
+    "*.toml.tmpl": "toml",
+    "**/NuGet/**/*.config.tmpl": "xml"
   },
 
   "gopls": {
