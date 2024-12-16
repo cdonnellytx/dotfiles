@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Types>
+  <Type>
+    <Name>Amazon.S3.Model.S3Object</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>Prefix</Name>
+        <GetScriptBlock>
+          $pos = $this.Key.LastIndexOf('/')
+          if ($pos -lt 0)
+          {
+              return ""
+          }
+
+          if ($pos -eq $this.Key.Length - 1)
+          {
+              # this is a directory
+              $pos = $this.Key.LastIndexOf('/', $pos - 1)
+          }
+
+          return $this.Key.Substring(0, $pos + 1)
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>Name</Name>
+        <GetScriptBlock>
+          return $this.Key.Substring($this.Prefix.Length).TrimEnd('/') # don't include trailing slash
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>Directory</Name>
+        <GetScriptBlock>
+          return $this.BucketName + "/" + $this.Prefix
+        </GetScriptBlock>
+      </ScriptProperty>
+
+      <AliasProperty>
+        <Name>FullName</Name>
+        <ReferencedMemberName>Key</ReferencedMemberName>
+      </AliasProperty>
+
+      <AliasProperty>
+        <Name>Length</Name>
+        <ReferencedMemberName>Size</ReferencedMemberName>
+      </AliasProperty>
+
+      <ScriptProperty>
+        <Name>IsDirectory</Name>
+        <GetScriptBlock>$this.Key -clike '*/'</GetScriptBlock>
+      </ScriptProperty>
+
+      <ScriptProperty>
+        <Name>Mode</Name>
+        <GetScriptBlock>
+          return "{0}----" -f ($this.IsDirectory ? 'd' : '-')
+        </GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

@@ -95,7 +95,7 @@ function Enter-Operation
         [string] $Name
     )
 
-    $padding = $host.UI.RawUI.WindowSize.Width -ge 110 ? 100 : 60
+    $padding = [Math]::Max(150, [Math]::Min(60, $host.UI.RawUI.WindowSize.Width - 20))
 
     Write-Host -NoNewline ("${Name}`u{2026}".PadRight($padding))
 }

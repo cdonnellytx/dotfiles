@@ -13,16 +13,32 @@ indent_style = space
 #   - trim_trailing_whitespace
 
 # Standard XML files
-[*.xml]
+[*.{xml,xslt,xsd}{,tmpl}]
 indent_size = 2
 trim_trailing_whitespace = false
 
-[*.tmTheme]
+[*.tmTheme{,tmpl}]
 indent_style = space
 indent_size = 2
 
-[*.json]
+[*.json{,tmpl}]
 indent_size = 2
+trim_trailing_whitespace = false
 
-[*.ps1{,.tmpl}]
+[*.toml{,tmpl}]
+indent_size = 2
+trim_trailing_whitespace = false
+
+# PowerShell scripts
+[*.{ps1,psd1,psm1}{,tmpl}]
 indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+
+# Markdown files
+# NOTE: Markdown trailing whitespace is significant.
+# @see https://github.com/Microsoft/vscode/issues/1679
+[*.{md,markdown}{,tmpl}]
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = false

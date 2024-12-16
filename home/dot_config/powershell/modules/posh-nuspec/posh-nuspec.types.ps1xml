@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>NuGetPackage</Name>
+    <Members>
+      <MemberSet>
+        <Name>PSStandardMembers</Name>
+        <Members>
+          <NoteProperty>
+            <Name>DefaultDisplayProperty</Name>
+            <Value>Id</Value>
+          </NoteProperty>
+          <PropertySet>
+            <Name>DefaultKeyPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+            </ReferencedProperties>
+          </PropertySet>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Version</Name>
+              <Name>Description</Name>
+              <Name>Source</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <ScriptProperty>
+        <Name>TargetFrameworks</Name>
+        <GetScriptBlock>return $this._GetTargetFrameworks()</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+  <Type>
+    <Name>NuGetFilePackage</Name>
+    <Members>
+      <MemberSet>
+        <Name>PSStandardMembers</Name>
+        <Members>
+          <NoteProperty>
+            <Name>DefaultDisplayProperty</Name>
+            <Value>Id</Value>
+          </NoteProperty>
+          <PropertySet>
+            <Name>DefaultKeyPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+            </ReferencedProperties>
+          </PropertySet>
+          <PropertySet>
+            <Name>DefaultDisplayPropertySet</Name>
+            <ReferencedProperties>
+              <Name>Id</Name>
+              <Name>Version</Name>
+              <Name>Description</Name>
+              <Name>Source</Name>
+            </ReferencedProperties>
+          </PropertySet>
+        </Members>
+      </MemberSet>
+      <AliasProperty>
+        <Name>Source</Name>
+        <ReferencedMemberName>Path</ReferencedMemberName>
+      </AliasProperty>
+      <ScriptProperty>
+        <Name>File</Name>
+        <GetScriptBlock>return $this._GetFile()</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>Directory</Name>
+        <GetScriptBlock>return $this._GetDirectory()</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

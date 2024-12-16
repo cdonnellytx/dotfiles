@@ -1,0 +1,62 @@
+{
+  "name": "cdonnelly",
+  "description": "My personal color scheme by Chris Donnelly",
+  "repository": "https://github.com/cdonnellytx/PowerShell",
+  "PSReadLine": {
+    "Command": "\u001b[93m",
+    "Comment": "\u001b[32m",
+    "ContinuationPrompt": "\u001b[37m",
+    "Default": "\u001b[37m",
+    "Emphasis": "\u001b[96m",
+    "Error": "\u001b[91m",
+    "InlinePrediction": "\u001b[38;5;238m",
+    "Keyword": "\u001b[92m",
+    "ListPrediction": "\u001b[33m",
+    "ListPredictionSelected": "\u001b[48;5;238m",
+    "ListPredictionTooltip": "\u001b[97;2;3m",
+    "Member": "\u001b[36m",
+    "Number": "\u001b[36m",
+    "Operator": "\u001b[90m",
+    "Parameter": "\u001b[90m",
+    "Selection": "\u001b[30;47m",
+    "String": "\u001b[36m",
+    "Type": "\u001b[37m",
+    "Variable": "\u001b[92m"
+  },
+  "PSStyle": {
+    "OutputRendering": 0,
+    "Formatting": {
+      "FormatAccent": "\u001b[32;1m",
+      "TableHeader": "\u001b[32;1m",
+      "ErrorAccent": "\u001b[36;1m",
+      "Error": "\u001b[31;1m",
+      "Warning": "\u001b[33;1m",
+      "Verbose": "\u001b[35;1m",
+      "Debug": "\u001b[32;1m"
+    },
+    "Progress": {
+      "Style": "\u001b[33;1m",
+      "MaxWidth": 120,
+      "View": 0,
+      "UseOSCIndicator": false
+    },
+    "FileInfo": {
+      "Directory": "\u001b[44;1m",
+      "SymbolicLink": "\u001b[36;1m",
+      "Executable": "\u001b[32;1m",
+      "Extension": {
+        ".psm1": "\u001b[33;1m",
+        ".gz": "\u001b[31;1m",
+        ".ps1": "\u001b[33;1m",
+        ".cab": "\u001b[31;1m",
+        ".7z": "\u001b[31;1m",
+        ".ps1xml": "\u001b[33;1m",
+        ".psd1": "\u001b[33;1m",
+        ".tar": "\u001b[31;1m",
+        ".zip": "\u001b[31;1m",
+        ".tgz": "\u001b[31;1m",
+        ".nupkg": "\u001b[31;1m"
+      }
+    }
+  }
+}

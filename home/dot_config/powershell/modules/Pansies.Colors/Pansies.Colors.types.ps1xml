@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Types>
+  <Type>
+    <Name>AlphaRgbColorBase</Name>
+    <Members>
+      <ScriptProperty>
+        <Name>ARGB</Name>
+        <GetScriptBlock>$this.GetARGB()</GetScriptBlock>
+      </ScriptProperty>
+      <ScriptProperty>
+        <Name>RGBA</Name>
+        <GetScriptBlock>$this.GetRGBA()</GetScriptBlock>
+      </ScriptProperty>
+    </Members>
+  </Type>
+</Types>

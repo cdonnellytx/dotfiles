@@ -1,0 +1,3 @@
+[*.{ps1,psm1,psd1}]
+# don't trim, keep compatible with posh-git
+trim_trailing_whitespace = false

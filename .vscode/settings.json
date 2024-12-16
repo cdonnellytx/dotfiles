@@ -9,9 +9,16 @@
     "*.ps1.tmpl": "powershell",
     "*.toml.tmpl": "toml"
   },
+
   "gopls": {
     // GCRAP: For some stupid reason gopls does not default to syntax highlighting being on.
     // Including this here to explicitly remind me that this is a thing I have to do, in case there's some reason I have to turn it off globally later...
     "ui.semanticTokens": true
-  }
+  },
+
+  "powershell.codeFormatting.preset": "Allman",
+  "powershell.codeFormatting.useCorrectCasing": true,
+  "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+
+  "powershell.scriptAnalysis.enable": true
 }
