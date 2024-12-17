@@ -16,6 +16,7 @@ param()
         SkipMessage = 'Windows only'
     }
     'nvm'
+    'Pansies'
     'PsIni'
     'wsl'
     'z'
