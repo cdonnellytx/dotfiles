@@ -8,6 +8,8 @@
 {{-     $personal = true -}}
 {{- end -}}
 
+{{- $development := or $work $personal }}
+
 {{- $email := "" -}}
 {{- if $work -}}
 {{-     $email = print "chris.donnelly@" "coxautoinc.com" -}}
@@ -33,6 +35,7 @@
     PSModulePath = {{ joinPath .chezmoi.workingTree "lib/modules"  | toToml }}
 
 [data]
+    development = {{ $development | toToml }}
     email = {{ $email | toToml }}
     personal = {{ $personal | toToml }}
     work = {{ $work | toToml }}

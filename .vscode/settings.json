@@ -8,7 +8,8 @@
     "*.cmd.tmpl": "bat",
     "*.ps1.tmpl": "powershell",
     "*.toml.tmpl": "toml",
-    "**/NuGet/**/*.config.tmpl": "xml"
+    "**/NuGet/**/*.config.tmpl": "xml",
+    "*.json.tmpl": "jsonc"
   },
 
   "gopls": {

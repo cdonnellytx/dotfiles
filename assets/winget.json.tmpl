@@ -1,0 +1,69 @@
+{
+  "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+  "CreationDate": "2024-12-13T09:35:14.026-06:00",
+  "Sources": [
+    {
+      "Packages": [
+        {{- /* Core tools */}}
+        { "PackageIdentifier": "7zip.7zip" },
+        { "PackageIdentifier": "AgileBits.1Password" },
+        { "PackageIdentifier": "AgileBits.1Password.CLI" },
+        { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
+        { "PackageIdentifier": "dandavison.delta" },
+        { "PackageIdentifier": "Git.Git" },
+        { "PackageIdentifier": "JAMSoftware.TreeSize.Free" },
+        { "PackageIdentifier": "JanDeDobbeleer.OhMyPosh" },
+        { "PackageIdentifier": "jftuga.less" },
+        { "PackageIdentifier": "Microsoft.OneDrive" },
+        { "PackageIdentifier": "Microsoft.PowerToys" },
+        { "PackageIdentifier": "Microsoft.Teams" },
+        { "PackageIdentifier": "Microsoft.WindowsTerminal" },
+        { "PackageIdentifier": "Microsoft.WSL" },
+        { "PackageIdentifier": "Mozilla.Firefox" },
+        { "PackageIdentifier": "Obsidian.Obsidian" },
+        { "PackageIdentifier": "REALiX.HWiNFO" },
+        { "PackageIdentifier": "ScooterSoftware.BeyondCompare.4" },
+        { "PackageIdentifier": "SlackTechnologies.Slack" },
+        { "PackageIdentifier": "sharkdp.bat" },
+        { "PackageIdentifier": "vim.vim" },
+
+        {{- /* Browsers (other) */}}
+        { "PackageIdentifier": "Google.Chrome" },
+        { "PackageIdentifier": "Microsoft.Edge" },
+
+        {{/* Drivers */ -}}
+        {{ if .personal }}{ "PackageIdentifier": "Logitech.GHUB" },{{ end }}
+        { "PackageIdentifier": "Microsoft.MouseandKeyboardCenter" },
+
+        {{/* Development */}}
+        {{- if .development -}}
+        { "PackageIdentifier": "CoreyButler.NVMforWindows" },
+        { "PackageIdentifier": "Docker.DockerDesktop" },
+        { "PackageIdentifier": "GitHub.cli" },
+        { "PackageIdentifier": "GitHub.GitHubDesktop" },
+        { "PackageIdentifier": "GnuPG.Gpg4win" },
+        { "PackageIdentifier": "JetBrains.Toolbox" },
+        { "PackageIdentifier": "KirillOsenkov.MSBuildStructuredLogViewer" },
+        { "PackageIdentifier": "Microsoft.DevHome" },
+        { "PackageIdentifier": "Microsoft.NuGet" },
+        { "PackageIdentifier": "RicoSuter.NSwagStudio" },
+        { "PackageIdentifier": "Microsoft.PerfView" },
+        { "PackageIdentifier": "Microsoft.VisualStudioCode" },
+        { "PackageIdentifier": "Microsoft.WebDeploy" },
+        { "PackageIdentifier": "Microsoft.WindowsADK" },
+        { "PackageIdentifier": "Telerik.Fiddler.Classic" },
+        { "PackageIdentifier": "TortoiseGit.TortoiseGit" }
+        {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
+        {{- /* LATER: SUDO gerardog.gsudo */ -}}
+        {{- end }}
+      ],
+      "SourceDetails": {
+        "Argument": "https://cdn.winget.microsoft.com/cache",
+        "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+        "Name": "winget",
+        "Type": "Microsoft.PreIndexed.Package"
+      }
+    }
+  ],
+  "WinGetVersion": "1.10.40-preview"
+}

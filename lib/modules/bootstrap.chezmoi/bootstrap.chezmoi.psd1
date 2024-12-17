@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.chezmoi.psm1'
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '0.1.1'
     GUID = '5392ac22-7470-46c0-91ca-5690b6257451'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -8,9 +8,13 @@
     FunctionsToExport = @(
         'Invoke-Chezmoi',
         'Get-ChezmoiData',
+        'Get-ChezmoiSourceDir',
         'Get-ChezmoiWorkingTree'
     )
     CmdletsToExport = @()
     VariablesToExport =  @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.0'
+    RequiredModules = @()
 }

@@ -1,5 +1,3 @@
-#requires -version 7
-
 using namespace System
 using namespace System.Collections.Generic
 using namespace System.IO
@@ -13,6 +11,7 @@ Invokes Chezmoi.
 function Invoke-Chezmoi
 {
     [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([string])]
     param
     (
         [Parameter(Position = 0, Mandatory)]
@@ -61,9 +60,36 @@ function Invoke-Chezmoi
 function Get-ChezmoiData
 {
     [CmdletBinding()]
-    param
-    ()
+    [OutputType([PSObject])]
+    param()
+
     Invoke-Chezmoi -Command 'data' --format json | ConvertFrom-Json
+}
+
+<#
+.SYNOPSIS
+Gets the Chezmoi source directory.
+#>
+function Get-ChezmoiSourceDir
+{
+    [CmdletBinding()]
+    [OutputType([string])]
+    [OutputType([IO.DirectoryInfo])]
+    param
+    (
+        [switch] $AsObject
+    )
+
+    $path = $Env:CHEZMOI_SOURCE_DIR ?? (Get-ChezmoiData).chezmoi.sourceDir
+
+    if ($AsObject)
+    {
+        return Get-Item -LiteralPath:$path
+    }
+
+
+    $provider = $null
+    $PSCmdlet.GetResolvedProviderPathFromPSPath($path, [ref] $provider)
 }
 
 <#
