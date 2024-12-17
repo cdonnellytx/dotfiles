@@ -12,4 +12,9 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.0'
+    RequiredModules = @(
+        'bootstrap.ux'
+    )
 }

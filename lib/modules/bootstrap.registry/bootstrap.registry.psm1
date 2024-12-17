@@ -1,10 +1,28 @@
-#requires -version 7.0
-
 using namespace System.Collections.Generic
 using namespace System.IO
 using namespace Microsoft.Win32
 
 Set-StrictMode -Version Latest
+
+<#
+.PRIVATE
+#>
+filter Format-Key
+{
+    $_ -creplace '^(HKEY_\w+):?', {
+        switch ($_.Groups[1].Value)
+        {
+            'HKEY_CURRENT_USER' { 'HKCU:' }
+            'HKEY_LOCAL_MACHINE' { 'HKLM:' }
+            default { $_ }
+        }
+    } `
+        -ireplace ':\\Software\\', ':\Sof…\' `
+        -ireplace '…\\Policies\\', '…\Pol…\' `
+        -ireplace '…\\Microsoft\\', '…\Mic…\' `
+        -ireplace '…\\Windows\\', '…\Win…\' `
+        -creplace '(?<=\\).{40,}?(?=\\)', '...'
+}
 
 <#
 .SYNOPSIS
@@ -44,23 +62,34 @@ function Confirm-RegistryEntry
     process
     {
         Confirm-RegistryPath -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
+
+            if (!$PassThru) { Enter-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'" }
             if ($_ | Get-ItemProperty -Name $Name -ErrorAction Ignore)
             {
                 $_ | Set-ItemProperty -Name $Name -Value $Value -PassThru:$PassThru
+                if (!$PassThru)
+                {
+                    Exit-Operation -Skip "already set"
+                }
+
+                return
+            }
+
+            $pt = $PropertyType
+            if ($null -eq $pt)
+            {
+                $pt = if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }
+            }
+
+            $result = $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $pt
+            if ($PassThru)
+            {
+                return $result
             }
             else
             {
-                $pt = $PropertyType
-                if ($null -eq $pt)
-                {
-                    $pt = if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }
-                }
-
-                $result = $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $pt
-                if ($PassThru)
-                {
-                    return $result
-                }
+                Write-Warning "here"
+                Exit-Operation $result
             }
         }
     }
@@ -94,9 +123,18 @@ function Confirm-RegistryPath
     {
         $LiteralPath |
             ForEach-Object {
+                if (!$PassThru) { Enter-Operation "Ensure registry path '$($_ | Format-Key)'" }
+
                 if ($result = Get-Item -ErrorAction Ignore -LiteralPath $_)
                 {
-                    return $result
+                    if ($PassThru)
+                    {
+                        return $result
+                    }
+                    else
+                    {
+                        return Skip-Operation "already exists"
+                    }
                 }
 
                 # MSCRAP: mkdir doesn't create a tree structure in the registry provider.
@@ -122,6 +160,10 @@ function Confirm-RegistryPath
                 if ($PassThru)
                 {
                     return $result
+                }
+                else
+                {
+                    return Exit-Operation $result
                 }
             }
     }

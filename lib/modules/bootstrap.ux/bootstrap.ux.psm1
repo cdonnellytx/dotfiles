@@ -110,7 +110,8 @@ function Skip-Operation
         [object] $MessageData
     )
 
-    Write-Information -Tags $SkipTag -MessageData $MessageData
+    Write-Information -Tags $SkipTag -MessageData $MessageData -InformationAction Ignore -InformationVariable iv
+    return $iv
 }
 
 function Invoke-Operation
