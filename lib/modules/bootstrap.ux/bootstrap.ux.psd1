@@ -9,8 +9,9 @@
         'Write-Progress',
         'Write-Header',
         'Enter-Operation',
-        'Stop-Operation',
-        'Exit-Operation'
+        'Invoke-Operation',
+        'Exit-Operation',
+        'Skip-Operation'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

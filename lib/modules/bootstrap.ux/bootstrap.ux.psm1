@@ -2,6 +2,7 @@
 
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
+using namespace System.Management.Automation
 
 function Write-Progress
 {
@@ -100,20 +101,115 @@ function Enter-Operation
     Write-Host -NoNewline ("${Name}`u{2026}".PadRight($padding))
 }
 
-$okResult     = "[  `e[32mOK`e[0m  ]"
+$SkipTag = 'bootstrap.ux:skip'
+
+function Skip-Operation
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter()]
+        [object] $MessageData
+    )
+
+    Write-Information -Tags $SkipTag -MessageData $MessageData
+}
+
+function Invoke-Operation
+{
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Position = 0, Mandatory)]
+        [string] $Name,
+
+        [Parameter(Position = 1, Mandatory)]
+        [scriptblock] $ScriptBlock
+    )
+
+    process
+    {
+        # Clear out the exit code.
+        $LASTEXITCODE = $null
+
+        Enter-Operation -Name:$Name
+        try
+        {
+            $result = & $ScriptBlock 2>&1 3>&1 4>&1 5>&1 6>&1
+            $success = $?
+            if ($result)
+            {
+                Exit-Operation $result
+            }
+            elseif ($null -ne $LASTEXITCODE)
+            {
+                Exit-Operation -LastExitCode:$LASTEXITCODE
+            }
+            elseif ($success)
+            {
+                Exit-Operation
+            }
+            else
+            {
+                throw "Unknown or unspecified error"
+            }
+        }
+        catch
+        {
+            Exit-Operation $_
+            return
+        }
+    }
+}
+
+enum Result
+{
+    Ok
+    Skip
+    Failed
+}
+
+$okResult = "[  `e[32mOK`e[0m  ]"
+$skipResult = "[ `e[33mSKIP`e[0m ]"
 $failedResult = "[`e[31mFAILED`e[0m]"
+
+function Result
+{
+    [OutputType([string])]
+    param([string] $result, [string] $message = $null)
+
+    if ($message)
+    {
+        return '{0} ({1})' -f $result, ($message | Out-String -NoNewline)
+    }
+    else
+    {
+        return $result
+    }
+}
+
+function Ok([string] $message = $null) {
+    return Result $okResult $message
+}
+
+function Skip([string] $message = $null)
+{
+    return Result $skipResult $message
+}
+
+function Failed([string] $message = $null)
+{
+    return Result $failedResult $message
+}
 
 function Exit-Operation
 {
-    [CmdletBinding(DefaultParameterSetName = 'OK')]
+    [CmdletBinding(DefaultParameterSetName = 'Object')]
+    [OutputType([string])]
     param
     (
         [Parameter(Position = 0, ParameterSetName = 'Object')]
-        $InputObject,
-
-        [Parameter(Mandatory, ParameterSetName = 'Error', ValueFromPipeline)]
-        [Alias('Error')]
-        $Err,
+        [object] $InputObject,
 
         [Parameter(Mandatory, ParameterSetName = 'LastExitCode')]
         $LastExitCode
@@ -121,36 +217,46 @@ function Exit-Operation
 
     process
     {
-        $msg = switch ($PSCmdlet.ParameterSetName)
+        switch ($PSCmdlet.ParameterSetName)
         {
-            'OK' { $okResult }
             'Object'
             {
-                '{0} ({1})' -f $okResult, (Out-String -InputObject $InputObject -NoNewline)
-            }
-            'Error'
-            {
-                if ($Err)
+                if ($null -eq $InputObject -or $InputObject -eq '' -or $InputObject -eq @())
                 {
-                    Write-Error $Err
-                    return $failedResult
+                    return Ok
                 }
-                else
+
+                if ($errors = $InputObject | Where-Object { $_ -is [ErrorRecord] })
                 {
-                    return $okResult
+                    Write-Warning "  is error record"
+                    return Failed $errors
                 }
+
+                if ($skip = $InputObject | Where-Object { $_ -is [InformationRecord] -and $_.Tags -ccontains $SkipTag })
+                {
+                    return Skip $skip.MessageData
+                }
+
+                return Ok $InputObject
             }
+
             'LastExitCode'
             {
+                Write-Warning "Exit-Operation: is last exit code ${LastExitCode}"
                 switch ($LastExitCode)
                 {
                     0 { return $okResult }
-                    default { return $failedResult }
+                    { $_ -gt 0 -and $_ -lt 65535 }
+                    {
+                        return Result($failedResult, ("Exited with code {0}" -f $LastExitCode))
+                    }
+                    default
+                    {
+                        return Result($failedResult, ("Exited with code 0x{0:X8}" -f $LastExitCode))
+                    }
                 }
             }
         }
-
-        Write-Output $msg
     }
 }
 

@@ -50,33 +50,35 @@ function Update-NvmModuleInstallLocation
         return
     }
 
-    Set-NodeInstallLocation -WhatIf:$WhatIfPreference -Path:$InstallLocation -Confirm:$false
+    Invoke-Operation "Update nvm module install location" {
+        Set-NodeInstallLocation -WhatIf:$WhatIfPreference -Path:$InstallLocation -Confirm:$false
 
-    switch (Get-NodeInstallLocation)
-    {
-        $InstallLocation
+        switch (Get-NodeInstallLocation)
         {
-            # We're done.
-            return
-        }
-        "${InstallLocation}\.nvm"
-        {
-            # BUGBUG: Set-NodeInstallLocation as of 2.5.4 tacks an ".nvm" subdirectory on the end :(
-            $module = Get-Module -Name 'nvm'
-            $settingsPath = Join-Path $module.ModuleBase 'settings.json'
-            Copy-Item -LiteralPath:$settingsPath -Destination:"${settingsPath}.bak"
-            $json = Get-Content -LiteralPath:$settingsPath | ConvertFrom-Json -AsHashtable
-            $json.InstallPath = $InstallLocation
-            Set-Content -LiteralPath:$settingsPath -Value ($json | ConvertTo-Json -Depth 10)
-            if ($InstallLocation -eq (Get-NodeInstallLocation))
+            $InstallLocation
             {
+                # We're done.
                 return
             }
+            "${InstallLocation}\.nvm"
+            {
+                # BUGBUG: Set-NodeInstallLocation as of 2.5.4 tacks an ".nvm" subdirectory on the end :(
+                $module = Get-Module -Name 'nvm'
+                $settingsPath = Join-Path $module.ModuleBase 'settings.json'
+                Copy-Item -LiteralPath:$settingsPath -Destination:"${settingsPath}.bak"
+                $json = Get-Content -LiteralPath:$settingsPath | ConvertFrom-Json -AsHashtable
+                $json.InstallPath = $InstallLocation
+                Set-Content -LiteralPath:$settingsPath -Value ($json | ConvertTo-Json -Depth 10)
+                if ($InstallLocation -eq (Get-NodeInstallLocation))
+                {
+                    return
+                }
+            }
         }
-    }
 
-    # Nope
-    Write-Error "Unable to update node install location (expected '${InstallLocation}' but actually set '$(Get-NodeInstallLocation)')"
+        # Nope
+        Write-Error "Unable to update node install location (expected '${InstallLocation}' but actually set '$(Get-NodeInstallLocation)')"
+    }
 }
 
 #

@@ -1,4 +1,4 @@
-#requires -version 7.0
+#requires -version 7.0 -modules bootstrap.ux
 
 Using Namespace System
 Using Namespace System.Collections.Generic
@@ -218,8 +218,8 @@ function Set-EnvironmentVariable
     {
         # for pretty-printing
         [string] $msg = '{0} = {1} at {2}' -f `
-        (ConvertTo-Json -Compress -InputObject $Name),
-        (ConvertTo-Json -Compress -InputObject $Value),
+            (ConvertTo-Json -Compress -InputObject $Name),
+            (ConvertTo-Json -Compress -InputObject $Value),
         ($Target -join ', ')
 
         if (!$PSCmdlet.ShouldProcess($msg, "Set-EnvironmentVariable"))
@@ -227,23 +227,23 @@ function Set-EnvironmentVariable
             return
         }
 
-        Write-Verbose "Set environment variable ${msg}"
+        Invoke-Operation -Name "Set environment variable '${Name}'" {
+            $Target | ForEach-Object {
+                # cdonnelly 2018-07-15:
+                # [Environment]::SetEnvironmentVariable for User can be slow, so check the value isn't the same first.
+                # The worst part is, I can't figure out what it is that's listening on my home PC:
+                #   - closed all Chrome/Electron apps
+                #   - even closed ConEmu and used a plain PowerShell
+                # Still takes ~20 seconds.
+                #
+                # TODO figure out a way to speed this up.
+                # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
 
-        $Target | ForEach-Object {
-            # cdonnelly 2018-07-15:
-            # [Environment]::SetEnvironmentVariable for User/Process can be slow, so check the value isn't the same first.
-            # The worst part is, I can't figure out what it is that's listening on my home PC:
-            #   - closed all Chrome/Electron apps
-            #   - even closed ConEmu and used a plain PowerShell
-            # Still takes ~20 seconds.
-            #
-            # TODO figure out a way to speed this up.
-            # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
-
-            [string] $oldValue = [Environment]::GetEnvironmentVariable($Name, $_)
-            if ($oldValue -cne $Value)
-            {
-                Write-Verbose "different! $(@{ Old = $oldValue; New = $Value } | ConvertTo-Json)"
+                [string] $oldValue = [Environment]::GetEnvironmentVariable($Name, $_)
+                if ($oldValue -ceq $Value)
+                {
+                    return Skip-Operation "same value"
+                }
 
                 # Strictly different
                 [Environment]::SetEnvironmentVariable($Name, $Value, $_)
@@ -278,29 +278,31 @@ function Remove-EnvironmentVariable
     {
         # for pretty-printing
         [string] $msg = '{0} at {1}' -f `
-        (ConvertTo-Json -Compress -InputObject $Name),
-        ($Target -join ', ')
+            (ConvertTo-Json -Compress -InputObject $Name),
+            ($Target -join ', ')
 
         if (!$PSCmdlet.ShouldProcess($msg, "Remove-EnvironmentVariable"))
         {
             return
         }
 
-        Write-Verbose "Remove environment variable ${msg}"
+        Invoke-Operation -Name "Remove environment variable '${Name}'" {
+            $Target | ForEach-Object {
+                # cdonnelly 2018-07-15:
+                # [Environment]::SetEnvironmentVariable for User/Process can be slow, so check the value isn't the same first.
+                # The worst part is, I can't figure out what it is that's listening on my home PC:
+                #   - closed all Chrome/Electron apps
+                #   - even closed ConEmu and used a plain PowerShell
+                # Still takes ~20 seconds.
+                #
+                # TODO figure out a way to speed this up.
+                # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
 
-        $Target | ForEach-Object {
-            # cdonnelly 2018-07-15:
-            # [Environment]::SetEnvironmentVariable for User/Process can be slow, so check the value isn't the same first.
-            # The worst part is, I can't figure out what it is that's listening on my home PC:
-            #   - closed all Chrome/Electron apps
-            #   - even closed ConEmu and used a plain PowerShell
-            # Still takes ~20 seconds.
-            #
-            # TODO figure out a way to speed this up.
-            # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
+                if ($null -eq [Environment]::GetEnvironmentVariable($Name, $_))
+                {
+                    return Skip-Operation "Already removed"
+                }
 
-            if ([Environment]::GetEnvironmentVariable($Name, $_))
-            {
                 # Non-null/non-empty value.  Set empty.
                 [Environment]::SetEnvironmentVariable($Name, '', $_)
             }
@@ -901,53 +903,7 @@ function Update-PathVariable
     }
 }
 
-#
-# Aliases
-#
-# --BOOTSTRAP: NO ALIASES--
-# if ($PSVersionTable.PSVersion.Major -lt 6 -or $IsWindows)
-# {
-#     # Only create the alias in Windows.
-#     New-Alias -Name env -Value Get-EnvironmentVariable
-# }
-
-#
-# Tab Completion
-#
-
-if ($PSVersionTable.PSVersion.Major -ge 6)
-{
-    Microsoft.PowerShell.Core\Register-ArgumentCompleter `
-        -CommandName `
-            Get-EnvironmentVariable, Find-EnvironmentVariable, Set-EnvironmentVariable, Remove-EnvironmentVariable, `
-            Get-DelimitedEnvironmentVariable, Set-DelimitedEnvironmentVariable, Add-ValueToDelimitedEnvironmentVariable, Remove-ValueFromDelimitedEnvironmentVariable `
-        -ParameterName 'Name' `
-        -ScriptBlock {
-            param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-            Write-Verbose "argcomplete $commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters"
-
-            Find-EnvironmentVariable -Name "${wordToComplete}*" | Select-Object -ExpandProperty Name
-            @()
-        }
-
-    Microsoft.PowerShell.Core\Register-ArgumentCompleter `
-        -CommandName Get-PathVariable, Set-PathVariable, Add-PathVariable, Remove-PathVariable `
-        -ParameterName 'Name' `
-        -ScriptBlock {
-            param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
-            Write-Verbose "argcomplete $commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters"
-
-            # Prefer the variable PATH to all others on completion
-            $pattern = "${wordToComplete}*"
-            if ('PATH' -ilike $pattern)
-            {
-                Write-Output 'PATH'
-            }
-
-            Find-EnvironmentVariable -Name $pattern |
-                Where-Object { $_.Name -ilike '*PATH*' } |
-                Select-Object -ExpandProperty Name
-            @()
-        }
-}
+# BOOTSTRAP:
+# - no aliases
+# - no tab completion
 

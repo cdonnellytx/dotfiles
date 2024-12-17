@@ -1,13 +1,14 @@
 #!/usr/bin/env -S pwsh -NoProfile
-#requires -Version 7 -Modules Microsoft.PowerShell.Utility
+#requires -Version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.ux
+
 using namespace System.IO
+using namespace System.Management.Automation
 
 <#
 .SYNOPSIS
 Ensure .magic.mgc exists if possible.
 #>
 [CmdletBinding(SupportsShouldProcess)]
-[OutputType('Result')]
 param()
 
 <#
@@ -39,20 +40,25 @@ Gets the `file` command.
 function Get-FileCommand
 {
     [CmdletBinding()]
+    [OutputType([CommandInfo])]
+    [OutputType([scriptblock])]
     param()
 
     try
     {
-        Get-Command -CommandType Application -Name 'file' -ErrorAction Stop
+        Get-Command -CommandType Application -Name 'file' -ErrorAction Stop | Select-Object -First 1
     }
     catch
     {
-        if ($IsWindows -and ($wsl = Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1))
+        if ($IsWindows -and (Get-Command -CommandType Application -Name 'wsl' | Select-Object -First 1))
         {
             if ((wsl --status) -and $? -and (wsl command -v file))
             {
+                # return a script that wil invoke it and translate all arguments.
                 return { wsl file ($args | wslpath) }
             }
+
+            # nope, fall through.
         }
 
         Write-Error -ErrorRecord $_ -ErrorAction:$ErrorActionPreference
@@ -84,10 +90,6 @@ if (!($file = Get-FileCommand -ErrorAction SilentlyContinue))
     return
 }
 
-$result = [Result]::new("Build magic file")
-
-$magicFile = Join-Path $HOME '.magic.mgc'
-
 # GNUCRAP: You can't specify the name of the compiled file, AND it assumes ${PWD} as the place to dump it.
 if (!$PSCmdlet.ShouldProcess($magicItem, "Build magic file"))
 {
@@ -96,32 +98,27 @@ if (!$PSCmdlet.ShouldProcess($magicItem, "Build magic file"))
     return $result
 }
 
-$tmpdir = New-TemporaryDirectory
+Invoke-Operation "Rebuild file '.magic.mgc'" {
 
-Push-Location $tmpdir
-try
-{
-    & $file --magic-file "${HOME}/.magic.d" --compile
-    if (!$?)
+    $magicFile = Join-Path $HOME '.magic.mgc'
+    $tmpdir = New-TemporaryDirectory
+
+    Push-Location $tmpdir
+    try
     {
-        $result.Details += 'FAILED: magic file not compiled'
-        return
+        & $file --magic-file "${HOME}/.magic.d" --compile
+        if (!$?)
+        {
+            Write-Error 'FAILED: magic file not compiled'
+            return
+        }
+
+        # Should be one .mgc file.
+        Get-ChildItem -Path '*.mgc' | Move-Item -Destination $magicFile -Force -ErrorAction Stop
     }
-
-    # Should be one .mgc file.
-    Get-ChildItem -Path '*.mgc' | Move-Item -Destination $magicFile -Force -ErrorAction Stop
-
-    $result.Success = $true
-    $result.Details += "OK"
-    return $result
-}
-catch
-{
-    $result.Details += $_
-    return $result
-}
-finally
-{
-    Pop-Location
-    Remove-Item -Recurse $tmpdir -Force -ErrorAction Ignore
+    finally
+    {
+        Pop-Location
+        Remove-Item -Recurse $tmpdir -Force -ErrorAction Ignore
+    }
 }

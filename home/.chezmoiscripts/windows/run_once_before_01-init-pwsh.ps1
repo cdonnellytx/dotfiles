@@ -15,15 +15,14 @@ function Confirm-PSResourceRepositoryTrusted
     process
     {
         Get-PSResourceRepository -Name:$Name | ForEach-Object {
-            Enter-Operation "Trusting $($_.Name)"
-            if ($_.Trusted)
-            {
-                Exit-Operation "already trusted"
-                return
-            }
+            Invoke-Operation "Trusting PS repository '$($_.Name)'" {
+                if ($_.Trusted)
+                {
+                    return Skip-Operation "already trusted"
+                }
 
-            $_ | Set-PSResourceRepository -Trusted -WhatIf:$WhatIfPreference -ErrorVariable err
-            Exit-Operation -Err:$err
+                $_ | Set-PSResourceRepository -Trusted -WhatIf:$WhatIfPreference
+            }
         }
     }
 }

@@ -5,23 +5,47 @@ using namespace Microsoft.WinGet.Client.PSObjects
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
+class ModuleInfo
+{
+    [string] $Name
+    [bool] $Condition = $true
+
+    # The optional skip message.
+    [string] $SkipMessage = $null
+
+    # hashtable to object constructor
+    ModuleInfo()
+    {
+    }
+
+    # string to object constructor
+    ModuleInfo([string] $Name)
+    {
+        $this.Name = $Name
+    }
+}
+
 # Install-PSResource will blindly install the latest.
-[string[]] $moduleNames = @(
-    'Microsoft.WinGet.Client',
-    'PsIni',
-    'wsl',
+[ModuleInfo[]] $modules = @(
+    @{ Name = 'Microsoft.WinGet.Client'; Condition = $IsWindows; SkipMessage = 'Windows only' }
+    'PsIni'
+    'wsl'
     'z'
 )
 
-$moduleNames | ForEach-Object {
-    Enter-Operation "Installing module '${_}'"
-    if ($installedModule = Get-PSResource -Name $_ -ErrorAction Ignore)
-    {
-        Exit-Operation "v$($installedModule.Version) was already installed"
-        return
+$modules | ForEach-Object {
+    Invoke-Operation -Name "Install module '$($_.Name)'" -ScriptBlock {
+        if (!$_.Condition)
+        {
+            Skip-Operation $_.SkipMessage
+        }
+
+        if ($installedModule = Get-PSResource -Name $_.Name -ErrorAction Ignore)
+        {
+            Skip-Operation "v$($installedModule.Version) was already installed"
+            return
+        }
+
+        Install-PSResource -Name $_.Name
     }
-
-    Install-PSResource -Name $_ -ErrorVariable err
-    Exit-Operation -Error:$err
-}
-
+} -ErrorAction Stop

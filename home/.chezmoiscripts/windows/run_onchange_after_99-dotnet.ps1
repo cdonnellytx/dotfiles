@@ -19,9 +19,7 @@ function Disable-WorkloadUpdateNotify
     # GITCRAP: Because I symlink %APPDATA%\git to ~\.config\git, Git warns:
     # warning: 'C:\Users\cdonnelly/.config/git/config' was ignored because 'C:\Users\cdonnelly\AppData\Roaming/Git/config' exists.
     # Setting GIT_CONFIG_GLOBAL works around this.
-    Enter-Operation 'Set DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE'
-    Set-EnvironmentVariable -Name 'DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE' -Value 'true' -Target User @commonParams -ErrorVariable:err
-    Exit-Operation -Error:$err
+    Set-EnvironmentVariable -Name 'DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE' -Value 'true' -Target User @commonParams
 }
 
 <#
@@ -38,9 +36,7 @@ function Disable-Telemetry
     # GITCRAP: Because I symlink %APPDATA%\git to ~\.config\git, Git warns:
     # warning: 'C:\Users\cdonnelly/.config/git/config' was ignored because 'C:\Users\cdonnelly\AppData\Roaming/Git/config' exists.
     # Setting GIT_CONFIG_GLOBAL works around this.
-    Enter-Operation 'Set DOTNET_CLI_TELEMETRY_OPTOUT'
     Set-EnvironmentVariable -Name 'DOTNET_CLI_TELEMETRY_OPTOUT' -Value 'true' -Target User @commonParams -ErrorVariable:err
-    Exit-Operation -Error:$err
 }
 
 #

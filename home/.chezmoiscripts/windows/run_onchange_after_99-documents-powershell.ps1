@@ -63,21 +63,22 @@ else
         $destinationItemPath = Join-Path -Path $Destination -ChildPath $sourceItem.Name
 
         Write-Verbose "Make '${destinationItemPath}' call '${sourceItem}'"
-        Enter-Operation "Connect PowerShell profile to '${destinationItemPath}'"
-
-        if ($destinationItem = Get-Item -LiteralPath $destinationItemPath -ErrorAction Ignore)
-        {
-            if (($destinationItem | Get-Content -Raw) -eq $content)
+        Invoke-Operation "Connect PowerShell profile to '${destinationItemPath}'" {
+            if ($destinationItem = Get-Item -LiteralPath $destinationItemPath -ErrorAction Ignore)
             {
-                Exit-Operation "already exists"
-                return
+                $destinationContent = $destinationItem | Get-Content -Raw
+                if ($destinationContent.Trim() -eq $content.Trim())
+                {
+                    return Skip-Operation "already exists"
+                }
+
+                Write-Error "wait." -ErrorAction Inquire
+                $destinationItem | Rename-Item -NewName ('{0}.bak.{1:yyyyMMddHHmmss}' -f $destinationItem.Name, [DateTime]::UtcNow)
             }
 
-            $destinationItem | Rename-Item -NewName ('{0}.bak.{1:yyyyMMddHHmmss}' -f $destinationItem.Name, [DateTime]::UtcNow)
+            Set-Content -LiteralPath $destinationItem -Value $content
         }
-
-        Set-Content -LiteralPath $destinationItem -Value $content -ErrorVariable err
-        Exit-Operation -Error $err
     }
 }
+
 
