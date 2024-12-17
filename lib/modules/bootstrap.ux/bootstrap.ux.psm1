@@ -124,7 +124,10 @@ function Invoke-Operation
         [string] $Name,
 
         [Parameter(Position = 1, Mandatory)]
-        [scriptblock] $ScriptBlock
+        [scriptblock] $ScriptBlock,
+
+        [Parameter(ValueFromRemainingArguments)]
+        [object[]] $ArgumentList
     )
 
     process
@@ -135,8 +138,9 @@ function Invoke-Operation
         Enter-Operation -Name:$Name
         try
         {
-            $result = & $ScriptBlock 2>&1 3>&1 4>&1 5>&1 6>&1
+            $result = Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList 2>&1 6>&1
             $success = $?
+
             if ($result)
             {
                 Exit-Operation $result

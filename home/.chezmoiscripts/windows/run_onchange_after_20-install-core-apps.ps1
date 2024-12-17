@@ -1,4 +1,4 @@
-#requires -Version 7 -modules bootstrap.ux, bootstrap.winget
+#requires -version 7 -modules bootstrap.ux, bootstrap.winget
 
 using namespace Microsoft.WinGet.Client.PSObjects
 

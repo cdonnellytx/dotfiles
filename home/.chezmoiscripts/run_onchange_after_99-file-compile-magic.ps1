@@ -1,5 +1,5 @@
 #!/usr/bin/env -S pwsh -NoProfile
-#requires -Version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.ux
+#requires -version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.ux
 
 using namespace System.IO
 using namespace System.Management.Automation

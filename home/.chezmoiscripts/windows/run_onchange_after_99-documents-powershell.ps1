@@ -1,4 +1,4 @@
-#requires -Version 7 -Modules bootstrap.fs, bootstrap.knownfolders, bootstrap.ux, bootstrap.chezmoi
+#requires -version 7 -Modules bootstrap.fs, bootstrap.knownfolders, bootstrap.ux, bootstrap.chezmoi
 
 using namespace System.IO
 

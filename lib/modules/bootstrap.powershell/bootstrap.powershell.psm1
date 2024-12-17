@@ -328,251 +328,76 @@ function Find-ViaWinGet
 
 <#
 .SYNOPSIS
-Install a package via WinGet.
-
-.NOTES
-Install is always exact.
-
-MSCRAP: WinGet 1.8.1911 Install-WinGetPackage has several issues:
-- It does not honor -WhatIf
-- It does not print verbose install info
-- It _always_ installs even if the package is already installed (or not)
-- It explicitly rejects the `-Debug` parameter, stating "Debug parameter not supported"
+Install a package via PSResource if not already installed.
 #>
-function Install-ViaWinGet
+function Install-ViaPSResourceGet
 {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([void])]
-    [OutputType('Microsoft.WinGet.Client.Engine.PSObjects.PSInstalledCatalogPackage')]
-    [OutputType('Microsoft.WinGet.Client.Engine.PSObjects.PSInstallResult')]
+    [OutputType('Microsoft.PowerShell.PSResourceGet.UtilClasses.PSResourceInfo')]
     param
     (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
-        [WinGetItem] $InputObject,
-
-        # Specify the match option for a WinGet package query. This parameter accepts the following values:
-        #   - `Equals`
-        #   - `EqualsCaseInsensitive`
-        #   - `StartsWithCaseInsensitive`
-        #   - `ContainsCaseInsensitive`
-        [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption] $MatchOption = [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption]::Equals,
+        [PowerShellModuleInfo] $InputObject,
 
         # Force the installer to run.
         [Parameter()]
-        [switch] $Force
+        [switch] $Force,
+
+        # When true, returns the result state.
+        [Parameter()]
+        [switch] $PassThru
     )
 
     process
-    {
-        if (!$PSCmdlet.ShouldProcess($InputObject.ToString(), 'Install via WinGet'))
-        {
-            return
-        }
-
-        Invoke-Operation -Name "Installing ${InputObject}" -ArgumentList $Force, $MatchOption -ScriptBlock {
-            param($Force, $MatchOption)
-
-            # WinGet install wrapper.
-            # Be warned that `winget.exe install` (and Install-WinGetPackage) always installs certain apps, like Dropbox, so we have to test for its existence first.
-            if (!$Force -and ($result = $InputObject | Get-WinGetPackage -MatchOption:$MatchOption -ErrorAction:Stop))
-            {
-                return Skip-Operation "v$($result.InstalledVersion) was already installed"
-            }
-
-            $result = $InputObject | Microsoft.WinGet.Client\Install-WinGetPackage
-
-            switch ($result.Status)
-            {
-                # We're good.
-                'Ok'
-                {
-                    return
-                }
-
-                'NoApplicableInstallers'
-                {
-                    Write-Error -Category NotEnabled -Message "Scope '$($InputObject.Scope)' is not supported for this application." 2>&1 | Exit-Operation
-                }
-
-                'InstallError'
-                {
-                    Write-Error -Category InvalidResult -Message "Install failed: $($result.ExtendedErrorCode)" 2>&1 | Exit-Operation
-                }
-
-                default
-                {
-                    switch ($result.ExtendedErrorCode.ErrorCode)
-                    {
-                        0x8A15001E
-                        {
-                            # MSCRAP: The "msstore" source currently only works for Apps that are "Free" and rated "e" for everyone.
-                            # https://github.com/microsoft/winget-cli/issues/2052#issuecomment-1516664318
-                            switch ($InputObject.Source)
-                            {
-                                'msstore'
-                                {
-                                    Start-Process "ms-windows-store://pdp/?ProductId=$($InputObject.Id)"
-                                    Write-Error -Category NotImplemented -Message "Installing from the Microsoft Store currently only works for Apps that are `"Free`" and rated `"e`" for everyone." 2>&1 | Exit-Operation
-                                    return
-                                }
-
-                                # default: fall through.
-                            }
-                        }
-                    }
-
-                    Write-Error -Category InvalidResult -Message ('winget exited with code {0:X8}: {1}' -f $_, $result.ExtendedErrorCode) 2>&1 | Exit-Operation
-                }
-            }
-        }
-    }
-}
-
-<#
-.SYNOPSIS
-Pins the matching WinGet package.
-#>
-function Lock-WinGet
-{
-    [CmdletBinding(SupportsShouldProcess)]
-    [OutputType([PSCustomObject])]
-    param
-    (
-        # The ID of the package to pin.  Must be exact.
-        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Id,
-
-        # Version to which to pin the package. The wildcard '*' can be used as the last version part
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [SupportsWildcards()]
-        [string] $Version,
-
-        # Direct run the command and continue with non security related issues
-        [Parameter()]
-        [switch] $Force,
-
-        # Block from upgrading until the pin is removed, preventing override arguments
-        [Parameter()]
-        [switch] $Blocking,
-
-        # Pin a specific installed version
-        [Parameter()]
-        [switch] $Installed
-    )
-
-    begin
     {
         #region Arguments
 
-        [string[]] $pinAddArguments = @()
-
-        if ($Version)
+        if ($DebugPreference)
         {
-            $pinAddArguments += '--version', $Version
+            Write-Debug "$($PSCmdlet.MyInvocation.MyCommand.Name): InputObject: $($InputObject | Out-String)"
         }
 
-        if ($Force)
-        {
-            $pinAddArguments += '--force'
-        }
+        # #endregion Arguments
 
-        if ($Blocking)
-        {
-            $pinAddArguments += '--blocking'
-        }
-
-        if ($Installed)
-        {
-            $pinAddArguments += '--installed'
-        }
-
-        $pinAddArguments += @(
-            '--disable-interactivity',
-            '--accept-source-agreements'
-        )
-
-        #endregion Arguments
-    }
-
-    process
-    {
-        $GetParams = ([hashtable] $PSBoundParameters).Clone()
-        $GetParams.Remove('WhatIf')
-        $GetParams.Remove('Force')
-        $GetParams.Remove('Version')
-        $GetParams.Remove('Blocking')
-        $GetParams.Remove('Installed')
-
-        Get-WinGetPackage -Count 1 -MatchOption:EqualsCaseInsensitive @GetParams | ForEach-Object {
-            if ($PSCmdlet.ShouldProcess("Id: $($_.Id), arguments: $pinAddArguments", 'Pin WinGet package'))
+        Invoke-Operation -Name "Install module '$($InputObject.Name)'" -ScriptBlock {
+            if (!$_.Condition)
             {
-                switch -Regex (Invoke-WinGetCli pin add --id $_.Id @pinAddArguments)
-                {
-                    "^Found (?<Description>.+) \[(\w+\.\w+)]$"
-                    {
-                        # Found the package, good...
-                        Write-Debug $_
-                    }
-                    "^Pin added successfully$"
-                    {
-                        # Success!
-                        Write-Debug $_
-                    }
-                    "^There is already a pin\b"
-                    {
-                        Write-Information -Tags 'winget' -MessageData $_
-                    }
-
-                    default
-                    {
-                        Write-Warning $_
-                    }
-
-                }
+                Skip-Operation $_.SkipMessage
             }
+
+            if ($installedModule = Get-PSResource -Name $_.Name -ErrorAction Ignore)
+            {
+                Skip-Operation "v$($installedModule.Version) was already installed"
+                return
+            }
+
+            Install-PSResource -Name $_.Name -PassThru:$PassThru
         }
     }
 }
 
-class WinGetItem
+class PowerShellModuleInfo
 {
-    [string] $Id
-    [string] $Source = 'winget'
-    [PSPackageInstallScope] $Scope = 'UserOrUnknown'
+    [string] $Name
+    [bool] $Condition = $true
 
-    # The mode of install.
-    #   - `Default`: show the installer (noninteractive)
-    #   - `Interactive`: show the installer (interactive)
-    #   - `Silent`: do not show the installer.  This is **our** default.
-    #
-    # Improperly-scripted packages may ignore this, however.
-    [PSPackageInstallMode] $Mode = [PSPackageInstallMode]::Silent
+    # The optional skip message.
+    [string] $SkipMessage = $null
 
-    # A name for documentation purposes.  Not WinGetPackage name.
-    [string] $Description
-
-    # Zero-arg cast constructor
-    WinGetItem() {}
-
-    WinGetItem([string] $Id)
+    # hashtable to object constructor
+    PowerShellModuleInfo()
     {
-        $this.Id = $Id
     }
 
-    WinGetItem([string] $Id, [string] $Description)
+    # string to object constructor
+    PowerShellModuleInfo([string] $Name)
     {
-        $this.Id = $Id
-        $this.Description = $Description
+        $this.Name = $Name
     }
 
     [string] ToString()
     {
-        if ($this.Description)
-        {
-            return '"{0}" (id: {1})' -f $this.Description, $this.Id
-        }
-        return $this.Id
+        return $this.Name
     }
 }

@@ -1,11 +1,14 @@
 #!/usr/bin/env -S pwsh -NoProfile
-#requires -Version 7 -Module bootstrap.environment, bootstrap.knownfolders
+#requires -version 7 -modules bootstrap.environment, bootstrap.knownfolders, bootstrap.winget, nvm
 
 using namespace System
 
 <#
 .SYNOPSIS
-Set NVM_SYMLINK.
+Install and configure NVM for Windows.
+
+.LINK
+https://github.com/coreybutler/nvm-windows
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param()
@@ -26,50 +29,43 @@ function Update-NvmSymlink
 function Update-NvmModuleInstallLocation
 {
     [CmdletBinding(SupportsShouldProcess)]
-    param
-    (
-        [Parameter(Mandatory)]
-        [string] $InstallLocation
-    )
+    param()
 
-    if (!(Get-Command -Name 'Get-NodeInstallLocation'))
+    $nvmExe = Get-Command -Type Application -Name 'nvm' -ErrorAction Stop | Get-Item
+    $exeInstallLocation = $nvmExe.Directory.FullName    # nvm module exists.
+
+    $moduleInstallLocation = Get-NodeInstallLocation
+    if ($moduleInstallLocation -eq $exeInstallLocation)
     {
+        Write-Verbose "nvm module exeInstallLocation is desired value '${moduleInstallLocation}'"
         return
     }
 
-    # nvm module exists.
-    $CurrentValue = Get-NodeInstallLocation
-    if ($CurrentValue -eq $InstallLocation)
-    {
-        Write-Verbose "nvm module InstallLocation is desired value '${CurrentValue}'"
-        return
-    }
-
-    if (!$PSCmdlet.ShouldProcess("old path: '${CurrentValue}', new path: ${InstallLocation}", "Update nvm module InstallLocation"))
+    if (!$PSCmdlet.ShouldProcess("old path: '${moduleInstallLocation}', new path: ${exeInstallLocation}", "Update nvm module exeInstallLocation"))
     {
         return
     }
 
     Invoke-Operation "Update nvm module install location" {
-        Set-NodeInstallLocation -WhatIf:$WhatIfPreference -Path:$InstallLocation -Confirm:$false
+        Set-NodeInstallLocation -WhatIf:$WhatIfPreference -Path:$exeInstallLocation -Confirm:$false
 
         switch (Get-NodeInstallLocation)
         {
-            $InstallLocation
+            $exeInstallLocation
             {
                 # We're done.
                 return
             }
-            "${InstallLocation}\.nvm"
+            "${exeInstallLocation}\.nvm"
             {
                 # BUGBUG: Set-NodeInstallLocation as of 2.5.4 tacks an ".nvm" subdirectory on the end :(
                 $module = Get-Module -Name 'nvm'
                 $settingsPath = Join-Path $module.ModuleBase 'settings.json'
                 Copy-Item -LiteralPath:$settingsPath -Destination:"${settingsPath}.bak"
                 $json = Get-Content -LiteralPath:$settingsPath | ConvertFrom-Json -AsHashtable
-                $json.InstallPath = $InstallLocation
+                $json.InstallPath = $exeInstallLocation
                 Set-Content -LiteralPath:$settingsPath -Value ($json | ConvertTo-Json -Depth 10)
-                if ($InstallLocation -eq (Get-NodeInstallLocation))
+                if ($exeInstallLocation -eq (Get-NodeInstallLocation))
                 {
                     return
                 }
@@ -77,19 +73,16 @@ function Update-NvmModuleInstallLocation
         }
 
         # Nope
-        Write-Error "Unable to update node install location (expected '${InstallLocation}' but actually set '$(Get-NodeInstallLocation)')"
+        Write-Error "Unable to update node install location (expected '${exeInstallLocation}' but actually set '$(Get-NodeInstallLocation)')"
     }
 }
 
 #
 # Main
 #
-$nvmExe = Get-Command -CommandType Application -Name 'nvm' -ErrorAction Ignore
-if (!$nvmExe)
-{
-    Write-Verbose "nvm.exe not installed"
-    return
-}
+
+Install-ViaWinGet 'CoreyButler.NVMforWindows'
+Update-PathVariable PATH
 
 Update-NvmSymlink
-Update-NvmModuleInstallLocation -InstallLocation:(($nvmExe | Get-Item).Directory.FullName)
+Update-NvmModuleInstallLocation
