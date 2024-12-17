@@ -4,8 +4,6 @@
 .SYNOPSIS
 Import WinGet installed apps.
 Will install apps if not found but not upgrade them.
-.NOTES
-WinGet can install store apps, but will not include them in exports.
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param()

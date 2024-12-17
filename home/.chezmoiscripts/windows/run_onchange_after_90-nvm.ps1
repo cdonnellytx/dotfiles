@@ -1,5 +1,4 @@
-#!/usr/bin/env -S pwsh -NoProfile
-#requires -version 7 -modules bootstrap.environment, bootstrap.knownfolders, bootstrap.winget, nvm
+#requires -version 7 -modules bootstrap.environment, bootstrap.knownfolders, nvm
 
 using namespace System
 
@@ -81,7 +80,6 @@ function Update-NvmModuleInstallLocation
 # Main
 #
 
-Install-ViaWinGet 'CoreyButler.NVMforWindows'
 Update-PathVariable PATH
 
 Update-NvmSymlink
