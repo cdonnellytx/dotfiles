@@ -88,7 +88,6 @@ function Confirm-RegistryEntry
             }
             else
             {
-                Write-Warning "here"
                 Exit-Operation $result
             }
         }
