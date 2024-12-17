@@ -5,6 +5,21 @@ param()
 
 $commonParams = $PSBoundParameters
 
+function Update-GitConfigCoreLongPathsSetting
+{
+    # https://stackoverflow.com/questions/22575662/filename-too-long-in-git-for-windows
+    Invoke-Operation 'git: core.longpaths=true' {
+        Get-Command 'git' -ErrorAction Stop >$null
+        $value = git config --system core.longpaths
+        if ($value -eq 'true')
+        {
+            return Skip-Operation 'same value'
+        }
+
+        sudo git config --system core.longpaths true
+    }
+}
+
 function Update-GitConfigGlobal
 {
     # GITCRAP: Because I symlink %APPDATA%\git to ~\.config\git, Git warns:
@@ -18,4 +33,5 @@ function Update-GitConfigGlobal
 #
 #
 
+Update-GitConfigCoreLongPathsSetting
 Update-GitConfigGlobal

@@ -5,18 +5,26 @@
     "**/.magic.d/**/*": "properties",
     "config": "properties",
     ".chezmoiignore": "ignore",
+
+    "*.tmpl": "go-template",
     "*.cmd.tmpl": "bat",
+    "*.json.tmpl": "jsonc",
     "*.ps1.tmpl": "powershell",
     "*.toml.tmpl": "toml",
-    "**/NuGet/**/*.config.tmpl": "xml",
-    "*.json.tmpl": "jsonc"
+    "**/dot_config/git/config.tmpl": "toml", // because gitconfig isn't an option
+    "**/NuGet/**/*.config.tmpl": "xml"
   },
 
-  "gopls": {
-    // GCRAP: For some stupid reason gopls does not default to syntax highlighting being on.
-    // Including this here to explicitly remind me that this is a thing I have to do, in case there's some reason I have to turn it off globally later...
-    "ui.semanticTokens": true
-  },
+  "go-template.languages": [
+    "bat",
+    "json",
+    "jsonc",
+    "toml",
+    "yaml"
+  ],
+  "go-template.patterns": [
+    "*.tmpl"
+  ],
 
   "powershell.codeFormatting.preset": "Allman",
   "powershell.codeFormatting.useCorrectCasing": true,
