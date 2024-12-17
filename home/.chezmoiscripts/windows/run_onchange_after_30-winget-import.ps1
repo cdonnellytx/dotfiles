@@ -21,4 +21,8 @@ Write-Verbose "winget file template at ${wingetManifest}"
 Invoke-Operation "Import WinGet manifest" -WhatIf:$WhatIfPreference {
     # MSCRAP: Microsoft.WinGet.Client has export but NOT import (1.10.40-beta)
     winget import --import-file $wingetManifest --no-upgrade --accept-package-agreements --accept-source-agreements --disable-interactivity
+    if (!$?)
+    {
+        Write-Error ("winget exited with code 0x{0:X8}" -f $LASTEXITCODE)
+    }
 }
