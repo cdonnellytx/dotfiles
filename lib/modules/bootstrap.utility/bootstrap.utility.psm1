@@ -1,6 +1,3 @@
-#requires -version 7.0
-#requires -modules Microsoft.PowerShell.Utility
-
 Set-StrictMode -Version Latest
 
 <#
@@ -114,4 +111,38 @@ function Measure-TimeSpan
     .ForwardHelpCategory Cmdlet
 
     #>
+}
+
+<#
+.SYNOPSIS
+Evaluates an optional condition (bool or scriptblock).
+.EXAMPLE
+Resolve-Condition $null    => $true
+Resolve-Condition $false   => $false
+Resolve-Condition $true    => $true
+#>
+function Resolve-Condition
+{
+    [OutputType([bool])]
+    param
+    (
+        [object] $InputObject
+    )
+
+    switch ($InputObject)
+    {
+        $null { return $true }
+        $false { return $false }
+        $true { return $true }
+        { $_ -is [scriptblock] }
+        {
+            # script returns truthy
+            return !!(& $_)
+        }
+        default
+        {
+            Write-Error -Category InvalidArgument -Message "Condition must be either null, a Boolean, or a ScriptBlock." -TargetObject $_
+            return $false
+        }
+    }
 }

@@ -16,5 +16,10 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.0'
+    RequiredModules = @(
+        'Microsoft.PowerShell.Utility'
+    )
 }
 

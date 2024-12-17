@@ -1,5 +1,3 @@
-#requires -version 7 -modules bootstrap.logging, bootstrap.os, bootstrap.parser, Microsoft.WinGet.Client
-
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace Microsoft.WinGet.Client.PSObjects
@@ -350,13 +348,6 @@ function Install-ViaWinGet
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [WinGetItem] $InputObject,
 
-        # Specify the match option for a WinGet package query. This parameter accepts the following values:
-        #   - `Equals`
-        #   - `EqualsCaseInsensitive`
-        #   - `StartsWithCaseInsensitive`
-        #   - `ContainsCaseInsensitive`
-        [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption] $MatchOption = [Microsoft.WinGet.Client.PSObjects.PSPackageFieldMatchOption]::Equals,
-
         # Force the installer to run.
         [Parameter()]
         [switch] $Force
@@ -369,12 +360,17 @@ function Install-ViaWinGet
             return
         }
 
-        Invoke-Operation -Name "Installing ${InputObject}" -ArgumentList $Force, $MatchOption -ScriptBlock {
-            param($Force, $MatchOption)
+        Invoke-Operation -ErrorAction Stop -Name "Installing ${InputObject}" -ArgumentList $Force -ScriptBlock {
+            param($Force)
+
+            if (!(Resolve-Condition $InputObject.Condition))
+            {
+                return Skip-Operation $InputObject.SkipMessage
+            }
 
             # WinGet install wrapper.
             # Be warned that `winget.exe install` (and Install-WinGetPackage) always installs certain apps, like Dropbox, so we have to test for its existence first.
-            if (!$Force -and ($result = $InputObject | Get-WinGetPackage -MatchOption:$MatchOption -ErrorAction:Stop))
+            if (!$Force -and ($result = $InputObject | Get-WinGetPackage -ErrorAction:Stop))
             {
                 return Skip-Operation "v$($result.InstalledVersion) was already installed"
             }
@@ -541,6 +537,22 @@ class WinGetItem
     [string] $Id
     [string] $Source = 'winget'
     [PSPackageInstallScope] $Scope = 'UserOrUnknown'
+
+    # Specify the match option for a WinGet package query. This parameter accepts the following values:
+    #   - `Equals`
+    #   - `EqualsCaseInsensitive`
+    #   - `StartsWithCaseInsensitive`
+    #   - `ContainsCaseInsensitive`
+    [PSPackageFieldMatchOption] $MatchOption = [PSPackageFieldMatchOption]::Equals
+
+    # The maximum number of items to return.  Assumes exact match is desired.
+    [int] $Count = 1
+
+    # An optional condition (bool or scriptblock)
+    $Condition
+
+    # The optional skip message.
+    [string] $SkipMessage = $null
 
     # The mode of install.
     #   - `Default`: show the installer (noninteractive)

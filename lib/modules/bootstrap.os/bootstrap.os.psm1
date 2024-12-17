@@ -1,5 +1,3 @@
-#requires -version 7.0
-
 Set-StrictMode -Version Latest
 
 <#

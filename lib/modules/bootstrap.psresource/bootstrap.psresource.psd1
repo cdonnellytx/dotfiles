@@ -1,5 +1,5 @@
 @{
-    RootModule = 'bootstrap.powershell.psm1'
+    RootModule = 'bootstrap.psresource.psm1'
     ModuleVersion = '0.1.0'
     GUID = '33dd3070-d3c7-4781-804e-5b5ff49d9eac'
     Author = 'Chris R. Donnelly'
@@ -11,10 +11,10 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.0'
     RequiredModules = @(
-        'bootstrap.logging',
-        'bootstrap.os',
-        'bootstrap.parser',
+        'bootstrap.utility'
         'Microsoft.PowerShell.PSResourceGet'
     )
 }

@@ -14,9 +14,7 @@
     VariablesToExport = @()
     AliasesToExport = @()
     RequiredModules = @(
-        'bootstrap.logging',
-        'bootstrap.os',
-        'bootstrap.parser',
+        'bootstrap.utility',
         'Microsoft.WinGet.Client'
     )
 }

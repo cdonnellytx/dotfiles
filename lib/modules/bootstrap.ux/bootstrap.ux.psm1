@@ -1,5 +1,3 @@
-#requires -version 7 -modules Microsoft.PowerShell.Utility
-
 using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
@@ -117,7 +115,7 @@ function Skip-Operation
 
 function Invoke-Operation
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [Parameter(Position = 0, Mandatory)]
@@ -130,12 +128,26 @@ function Invoke-Operation
         [object[]] $ArgumentList
     )
 
+    begin
+    {
+        if (!$PSBoundParameters.ContainsKey('ErrorAction'))
+        {
+            $PSBoundParameters['ErrorAction'] = [ActionPreference]::Inquire
+        }
+    }
+
     process
     {
         # Clear out the exit code.
         $LASTEXITCODE = $null
 
         Enter-Operation -Name:$Name
+        if (!$PSCmdlet.ShouldProcess($Name))
+        {
+            Exit-Operation -Skip -InputObject 'WhatIf'
+            return
+        }
+
         try
         {
             $result = Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList 2>&1 6>&1
@@ -192,7 +204,8 @@ function Result
     }
 }
 
-function Ok([string] $message = $null) {
+function Ok([string] $message = $null)
+{
     return Result $okResult $message
 }
 
@@ -215,6 +228,9 @@ function Exit-Operation
         [Parameter(Position = 0, ParameterSetName = 'Object')]
         [object] $InputObject,
 
+        [Parameter(ParameterSetName = 'Object')]
+        [switch] $Skip,
+
         [Parameter(Mandatory, ParameterSetName = 'LastExitCode')]
         $LastExitCode
     )
@@ -225,6 +241,12 @@ function Exit-Operation
         {
             'Object'
             {
+                if ($Skip)
+                {
+                    # Manual skip.
+                    return Skip $InputObject
+                }
+
                 if ($null -eq $InputObject -or $InputObject -eq '' -or $InputObject -eq @())
                 {
                     return Ok
@@ -232,13 +254,12 @@ function Exit-Operation
 
                 if ($errors = $InputObject | Where-Object { $_ -is [ErrorRecord] })
                 {
-                    Write-Warning "  is error record"
                     return Failed $errors
                 }
 
-                if ($skip = $InputObject | Where-Object { $_ -is [InformationRecord] -and $_.Tags -ccontains $SkipTag })
+                if ($skipRecord = $InputObject | Where-Object { $_ -is [InformationRecord] -and $_.Tags -ccontains $SkipTag })
                 {
-                    return Skip $skip.MessageData
+                    return Skip $skipRecord.MessageData
                 }
 
                 return Ok $InputObject
@@ -259,6 +280,12 @@ function Exit-Operation
                         return Result($failedResult, ("Exited with code 0x{0:X8}" -f $LastExitCode))
                     }
                 }
+            }
+
+            default
+            {
+                Write-Error -Category InvalidArgument -Message "Unsupported parameter set: '${_}'"
+                return
             }
         }
     }
