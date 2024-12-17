@@ -4,16 +4,18 @@
   "Sources": [
     {
       "Packages": [
-        {{- /* Core tools */}}
+        // Core tools
         { "PackageIdentifier": "7zip.7zip" },
         { "PackageIdentifier": "AgileBits.1Password" },
         { "PackageIdentifier": "AgileBits.1Password.CLI" },
         { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
         { "PackageIdentifier": "dandavison.delta" },
+        { "PackageIdentifier": "gerardog.gsudo" },
         { "PackageIdentifier": "Git.Git" },
         { "PackageIdentifier": "JAMSoftware.TreeSize.Free" },
         { "PackageIdentifier": "JanDeDobbeleer.OhMyPosh" },
         { "PackageIdentifier": "jftuga.less" },
+        { "PackageIdentifier": "Microsoft.MouseandKeyboardCenter" },
         { "PackageIdentifier": "Microsoft.OneDrive" },
         { "PackageIdentifier": "Microsoft.PowerToys" },
         { "PackageIdentifier": "Microsoft.Teams" },
@@ -27,16 +29,16 @@
         { "PackageIdentifier": "sharkdp.bat" },
         { "PackageIdentifier": "vim.vim" },
 
-        {{- /* Browsers (other) */}}
+        // Browsers (other)
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Microsoft.Edge" },
 
-        {{/* Drivers */ -}}
-        {{ if .personal }}{ "PackageIdentifier": "Logitech.GHUB" },{{ end }}
-        { "PackageIdentifier": "Microsoft.MouseandKeyboardCenter" },
+        // {{ if .personal }}
+        { "PackageIdentifier": "Logitech.GHUB" },
+        // {{ end }}
 
-        {{/* Development */}}
-        {{- if .development -}}
+
+        // {{- if .development -}}
         { "PackageIdentifier": "CoreyButler.NVMforWindows" },
         { "PackageIdentifier": "Docker.DockerDesktop" },
         { "PackageIdentifier": "GitHub.cli" },
@@ -53,9 +55,8 @@
         { "PackageIdentifier": "Microsoft.WindowsADK" },
         { "PackageIdentifier": "Telerik.Fiddler.Classic" },
         { "PackageIdentifier": "TortoiseGit.TortoiseGit" }
-        {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
-        {{- /* LATER: SUDO gerardog.gsudo */ -}}
-        {{- end }}
+        // {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
+        // {{- end }}
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",

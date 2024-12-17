@@ -117,3 +117,72 @@ function Get-ChezmoiWorkingTree
     $provider = $null
     $PSCmdlet.GetResolvedProviderPathFromPSPath($path, [ref] $provider)
 }
+
+function Invoke-ChezmoiTemplate
+{
+    [CmdletBinding(DefaultParameterSetName = 'Input')]
+    param
+    (
+        # The input object.
+        [Parameter(ParameterSetName = 'Input', Position = 0, Mandatory, ValueFromPipeline)]
+        [string] $InputObject,
+
+        # The path to the script to invoke.
+        [Parameter(ParameterSetName = 'FilePath', Position = 0, Mandatory)]
+        [string] $FilePath,
+
+        # Write output to path instead of stdout
+        [Parameter()]
+        [string] $OutFile
+
+    )
+
+    begin
+    {
+        switch ($PSCmdlet.ParameterSetName)
+        {
+            'Input'
+            {
+                $buffer = [List[string]]::new()
+            }
+        }
+    }
+
+    process
+    {
+        switch ($PSCmdlet.ParameterSetName)
+        {
+            'Input'
+            {
+                $buffer.Add($InputObject)
+            }
+        }
+    }
+
+    end
+    {
+        [string] $text = switch ($PSCmdlet.ParameterSetName)
+        {
+            'Input'
+            {
+                $buffer -join [Environment]::NewLine
+            }
+            'FilePath'
+            {
+                Get-Content -LiteralPath:$FilePath -Raw -ErrorAction Stop
+            }
+            default
+            {
+                Write-Error -Category NotImplemented "For parameter set: '${_}'"
+            }
+        }
+
+        [string[]] $arguments = @()
+        if ($OutFile)
+        {
+            $arguments += '--output', $OutFile
+        }
+
+        $text | Invoke-Chezmoi execute-template @arguments
+    }
+}
