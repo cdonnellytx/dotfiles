@@ -3,5 +3,5 @@
 
 if ($bat = Get-Command -Type Application -Name 'bat', 'batcat' -ErrorAction Ignore | Select-Object -First 1)
 {
-    Invoke-Operation 'bat cache --build' { & $bat cache --build }
+    Invoke-Operation 'bat: Rebuild cache' { & $bat cache --build | Write-Verbose }
 }

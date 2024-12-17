@@ -84,12 +84,6 @@ class Result
 
 ################################################################################
 
-if (!($file = Get-FileCommand -ErrorAction SilentlyContinue))
-{
-    Write-Warning "Skipping: file command not found"
-    return
-}
-
 # GNUCRAP: You can't specify the name of the compiled file, AND it assumes ${PWD} as the place to dump it.
 if (!$PSCmdlet.ShouldProcess($magicItem, "Build magic file"))
 {
@@ -99,6 +93,11 @@ if (!$PSCmdlet.ShouldProcess($magicItem, "Build magic file"))
 }
 
 Invoke-Operation "Rebuild file '.magic.mgc'" {
+
+    if (!($file = Get-FileCommand -ErrorAction SilentlyContinue))
+    {
+        return Skip-Operation "'file' command not found"
+    }
 
     $magicFile = Join-Path $HOME '.magic.mgc'
     $tmpdir = New-TemporaryDirectory
