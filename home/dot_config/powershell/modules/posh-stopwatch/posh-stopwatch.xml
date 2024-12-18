@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>posh-stopwatch</name>
+    </assembly>
+    <members>
+        <member name="T:PoshStopwatch.Collections.LinkedDictionary`2">
+            <summary>
+            Represents an dictionary that preserves insert order.
+            </summary>
+            <inheritdoc />
+        </member>
+        <member name="T:PoshStopwatch.StopwatchTree">
+            <summary>
+            Represents a hierarchical tree of <see cref="T:System.Diagnostics.Stopwatch"/> objects.
+            </summary>
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.Name">
+            <summary>
+            The name of the stopwatch.
+            </summary>
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.ErrorRecord">
+            <summary>
+            The error record associated with this tree, if any.
+            </summary>
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.Parent">
+            <summary>
+            The parent stopwatch, if any.
+            </summary>
+        </member>
+        <member name="F:PoshStopwatch.StopwatchTree._elapsed">
+            <summary>
+            Manually recorded elapsed time.
+            </summary>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.StartNew(System.String)">
+            <summary>
+            Creates a new <see cref="T:PoshStopwatch.StopwatchTree"/> with the specified name and starts it.
+            </summary>
+            <param name="name">The <see cref="P:PoshStopwatch.StopwatchTree.Name"/> of the stopwatch.</param>
+            <returns>A new <see cref="T:PoshStopwatch.StopwatchTree"/> named <paramref name="name"/>.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.#ctor(System.String)">
+            <summary>
+            Creates a new <see cref="T:PoshStopwatch.StopwatchTree"/> with the specified name.
+            The stopwatch is not running.
+            </summary>
+            <param name="name">The <see cref="P:PoshStopwatch.StopwatchTree.Name"/> of the stopwatch.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="name"/> is <see langword="null"/>.</exception>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.Start">
+            <inheritdoc cref="M:System.Diagnostics.Stopwatch.Start" />
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.Stop">
+            <inheritdoc cref="M:System.Diagnostics.Stopwatch.Stop" />
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.IsRunning">
+            <inheritdoc cref="P:System.Diagnostics.Stopwatch.IsRunning" />
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.Elapsed">
+            <inheritdoc cref="P:System.Diagnostics.Stopwatch.Elapsed" />
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.ElapsedMilliseconds">
+            <inheritdoc cref="P:System.Diagnostics.Stopwatch.ElapsedMilliseconds" />
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.ElapsedTicks">
+            <inheritdoc cref="P:System.Diagnostics.Stopwatch.ElapsedTicks" />
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.Restart">
+            <summary>
+            Stops time interval measurement, resets the elapsed time to zero, and starts measuring elapsed time.
+            </summary>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.Reset">
+            <summary>
+            Stops time interval measurement and resets the elapsed time to zero, additionally removing all children.
+            </summary>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.GetOrAdd(System.String)">
+            <summary>
+            Gets or adds the existing child stopwatch tree by name.
+            </summary>
+            <param name="name">The name of the <see cref="T:PoshStopwatch.StopwatchTree"/>.</param>
+            <returns>The matching <see cref="T:PoshStopwatch.StopwatchTree"/>.</returns>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.Add(System.TimeSpan)">
+            <summary>
+            Adds a discrete value to <see cref="P:PoshStopwatch.StopwatchTree.Elapsed"/>.
+            </summary>
+            <param name="elapsed">The additional elapsed value.</param>
+        </member>
+        <member name="P:PoshStopwatch.StopwatchTree.Children">
+            <summary>
+            Gets the sequence of child stopwatch trees.
+            </summary>
+            <value>A sequence of zero or more <see cref="T:PoshStopwatch.StopwatchTree"/> objects.</value>
+        </member>
+        <member name="M:PoshStopwatch.StopwatchTree.ToString">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

@@ -33,7 +33,7 @@ function Install-ViaPSResourceGet
 
             if ($installedModule = Get-PSResource -Name $InputObject.Name -ErrorAction Ignore)
             {
-                Skip-Operation "v$($installedModule.Version) was already installed"
+                Skip-Operation "v$($installedModule.Version) already installed"
                 return
             }
 

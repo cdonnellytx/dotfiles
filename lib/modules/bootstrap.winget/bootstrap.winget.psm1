@@ -372,7 +372,7 @@ function Install-ViaWinGet
             # Be warned that `winget.exe install` (and Install-WinGetPackage) always installs certain apps, like Dropbox, so we have to test for its existence first.
             if (!$Force -and ($result = $InputObject | Get-WinGetPackage -ErrorAction:Stop))
             {
-                return Skip-Operation "v$($result.InstalledVersion) was already installed"
+                return Skip-Operation "v$($result.InstalledVersion) already installed"
             }
 
             $result = $InputObject | Microsoft.WinGet.Client\Install-WinGetPackage
