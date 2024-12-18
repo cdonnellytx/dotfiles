@@ -6,9 +6,11 @@
     CompanyName = ''
     Copyright = '(c) Chris R. Donnelly. All rights reserved.'
     FunctionsToExport = @(
+        'ConvertTo-WinGetItem'
         'Find-ViaWinGet',
         'Install-ViaWinGet',
-        'Lock-WinGet'
+        'Limit-WinGetPackage'
+        'Test-WinGetItem'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

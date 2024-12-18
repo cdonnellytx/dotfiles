@@ -28,3 +28,5 @@ $ExecutionContext.SessionState.Module.OnRemove = {
 
 # Now override.
 $global:ErrorActionPreference = 'Stop'
+$global:InformationPreference = 'Continue'
+#$global:VerbosePreference = 'Continue'

@@ -48,7 +48,7 @@ Get-ChildItem -LiteralPath $Documents -Include 'PowerShell', 'WindowsPowerShell'
         # Alias HOME to ~ because these live in OneDrive and may not be in the same home directory always.
         $sourceProfilePath = Join-Path -Path '~' -ChildPath (Resolve-Path -Relative $sourceItem.FullName -RelativeBasePath $HOME)
 
-        # Generate the expected content.
+        # Generate the expected content, always using CRLF since the assumption is Windows.
         $content = @"
 `$sharedProfile = `"$($sourceProfilePath | ToPowerShell)`"
 if (Test-Path -LiteralPath `$sharedProfile -PathType Leaf)
@@ -59,7 +59,8 @@ else
 {
     Write-Warning "Shared profile `${sharedProfile} not found."
 }
-"@
+"@ -creplace "`r?`n", "`r`n"
+
         $destinationItemPath = Join-Path -Path $Destination -ChildPath $sourceItem.Name
 
         Write-Verbose "Make '${destinationItemPath}' call '${sourceItem}'"
@@ -72,11 +73,10 @@ else
                     return Skip-Operation "already exists"
                 }
 
-                Write-Error "wait." -ErrorAction Inquire
                 $destinationItem | Rename-Item -NewName ('{0}.bak.{1:yyyyMMddHHmmss}' -f $destinationItem.Name, [DateTime]::UtcNow)
             }
 
-            Set-Content -LiteralPath $destinationItem -Value $content
+            Set-Content -LiteralPath $destinationItem -Value $content -NoNewline
         }
     }
 }

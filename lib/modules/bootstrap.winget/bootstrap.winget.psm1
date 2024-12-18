@@ -95,29 +95,6 @@ function Invoke-WinGetCli
         }
     }
 
-    Write-BootstrapLog @{
-        Command = @('winget.exe', $Command) + $FlatArguments
-        Success = $success
-        RawOutput = $rawOutput
-        Output = $output
-        Messages = $messages
-    }
-
-    Write-Debug "output judgment"
-    if (!$success)
-    {
-        switch ($LASTEXITCODE)
-        {
-            0x8A15001E
-            {
-                Write-Error -Category NotImplemented -Message "Installing from the Microsoft Store currently only works for Apps that are `"Free`" and rated `"e`" for everyone."
-                return
-            }
-        }
-        Write-Error -Category InvalidArgument -Message "${Command}: ${output}"
-        return
-    }
-
     return [string[]] $output
 }
 
@@ -248,6 +225,40 @@ class PackageVersion : IComparable
     }
 }
 
+function ConvertTo-WinGetItem
+{
+    [CmdletBinding()]
+    [OutputType([WinGetItem])]
+    param
+    (
+        # The package info.
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [WinGetItem] $InputObject
+    )
+
+    process
+    {
+        return $InputObject
+    }
+}
+
+function Test-WinGetItem
+{
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param
+    (
+        # The package info.
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [WinGetItem] $InputObject
+    )
+
+    process
+    {
+        !!($InputObject | Get-WinGetPackage | Select-Object -First 1)
+    }
+}
+
 <#
 .SYNOPSIS
 Searches for a package available for install using the `Find-WinGetPackage` command.
@@ -345,6 +356,7 @@ function Install-ViaWinGet
     [OutputType('Microsoft.WinGet.Client.Engine.PSObjects.PSInstallResult')]
     param
     (
+        # The package to install.  May be a string or properly-shaped object.
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [WinGetItem] $InputObject,
 
@@ -428,16 +440,15 @@ function Install-ViaWinGet
 .SYNOPSIS
 Pins the matching WinGet package.
 #>
-function Lock-WinGet
+function Limit-WinGetPackage
 {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([PSCustomObject])]
     param
     (
-        # The ID of the package to pin.  Must be exact.
-        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
-        [string] $Id,
+        # The package to pin.  May be a string or properly-shaped object.
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [WinGetItem] $InputObject,
 
         # Version to which to pin the package. The wildcard '*' can be used as the last version part
         [Parameter()]
@@ -485,6 +496,7 @@ function Lock-WinGet
         }
 
         $pinAddArguments += @(
+            '--exact',
             '--disable-interactivity',
             '--accept-source-agreements'
         )
@@ -501,32 +513,52 @@ function Lock-WinGet
         $GetParams.Remove('Blocking')
         $GetParams.Remove('Installed')
 
-        Get-WinGetPackage -Count 1 -MatchOption:EqualsCaseInsensitive @GetParams | ForEach-Object {
-            if ($PSCmdlet.ShouldProcess("Id: $($_.Id), arguments: $pinAddArguments", 'Pin WinGet package'))
+        Enter-Operation "Pin WinGet package '$($InputObject.Id)'"
+
+        $arguments = $pinAddArguments
+        if ($InputObject.Source) {
+            $arguments += '--source', $InputObject.Source
+        }
+
+        if (!$PSCmdlet.ShouldProcess("Id: $($InputObject.Id), arguments: ${arguments}", 'Pin WinGet package'))
+        {
+            return Exit-Operation -Skip 'WhatIf'
+        }
+
+        switch -Regex (Invoke-WinGetCli pin add --id $InputObject.Id @arguments)
+        {
+            "^Found (?<Description>.+) \[(\w+\.\w+)]$"
             {
-                switch -Regex (Invoke-WinGetCli pin add --id $_.Id @pinAddArguments)
-                {
-                    "^Found (?<Description>.+) \[(\w+\.\w+)]$"
-                    {
-                        # Found the package, good...
-                        Write-Debug $_
-                    }
-                    "^Pin added successfully$"
-                    {
-                        # Success!
-                        Write-Debug $_
-                    }
-                    "^There is already a pin\b"
-                    {
-                        Write-Information -Tags 'winget' -MessageData $_
-                    }
+                # Found the package, good...
+                Write-Verbose $_
+            }
+            "^Pin added successfully$"
+            {
+                # Success!
+                Exit-Operation $_
+            }
+            "^There is already a pin\b"
+            {
+                # Pin exists (normal)
+                return Exit-Operation -Skip $_
+            }
 
-                    default
-                    {
-                        Write-Warning $_
-                    }
+            "^A pin already exists\b"
+            {
+                # Pin exists and is blocking
+                return Exit-Operation -Skip $_
+            }
 
-                }
+            "^No installed package found matching input criteria\b"
+            {
+                Write-Warning ($_ | ConvertTo-Json)
+                return Exit-Operation -Fail $_
+            }
+
+            default
+            {
+                Write-Warning ($_ | ConvertTo-Json)
+                return Exit-Operation -Fail $_
             }
         }
     }

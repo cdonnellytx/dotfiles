@@ -96,12 +96,15 @@ function Enter-Operation
         [string] $Name
     )
 
-    $padding = [Math]::Clamp($host.UI.RawUI.WindowSize.Width - 40, 60, 150)
-
-    Write-Host -NoNewline ("${Name}`u{2026}".PadRight($padding))
+    Write-Information -Tags $OperationTag, $EnterTag -MessageData "${Name}`u{2026}"
 }
 
+$OperationTag = 'bootstrap.ux:operation'
+$EnterTag = 'bootstrap.ux:enter'
+$OkTag = 'bootstrap.ux:ok'
 $SkipTag = 'bootstrap.ux:skip'
+$FailedTag = 'bootstrap.ux:failed'
+$ExitTag = 'bootstrap.ux:exit'
 
 function Skip-Operation
 {
@@ -112,8 +115,8 @@ function Skip-Operation
         [object] $MessageData
     )
 
-    Write-Information -Tags $SkipTag -MessageData $MessageData -InformationAction Ignore -InformationVariable iv
-    return $iv
+    Write-Error -Category
+    Write-Information -Tags $OperationTag, $SkipTag -MessageData $MessageData -InformationAction Ignore -InformationVariable iv
 }
 
 function Invoke-Operation
@@ -133,18 +136,13 @@ function Invoke-Operation
 
     begin
     {
-        if (!$PSBoundParameters.ContainsKey('ErrorAction'))
-        {
-            $PSBoundParameters['ErrorAction'] = [ActionPreference]::Inquire
-        }
+        # Clear out the exit code.
+        $LASTEXITCODE = $null
+        Enter-Operation -Name:$Name
     }
 
     process
     {
-        # Clear out the exit code.
-        $LASTEXITCODE = $null
-
-        Enter-Operation -Name:$Name
         if (!$PSCmdlet.ShouldProcess($Name))
         {
             Exit-Operation -Skip -InputObject 'WhatIf'
@@ -153,14 +151,12 @@ function Invoke-Operation
 
         try
         {
-            $result = Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList 2>&1 6>&1
+            Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList | ForEach-Object {
+                Write-Output $_
+            }
             $success = $?
 
-            if ($result)
-            {
-                Exit-Operation $result
-            }
-            elseif ($null -ne $LASTEXITCODE)
+            if ($null -ne $LASTEXITCODE)
             {
                 Exit-Operation -LastExitCode:$LASTEXITCODE
             }
@@ -192,34 +188,39 @@ $okResult = "[  `e[32mOK`e[0m  ]"
 $skipResult = "[ `e[33mSKIP`e[0m ]"
 $failedResult = "[`e[31mFAILED`e[0m]"
 
+
+$resultPrefix = ('-' * 10) + '> '
+
 function Result
 {
     [OutputType([string])]
-    param([string] $result, [string] $message = $null)
+    param([string] $result, [string] $message, [string[]] $tags)
 
-    if ($message)
+    $messageData = if ($message)
     {
-        return '{0} ({1})' -f $result, ($message | Out-String -NoNewline)
+        '{0}{1} ({2})' -f $resultPrefix, $result, ($message | Out-String -NoNewline)
     }
     else
     {
-        return $result
+        '{0}{1}' -f $resultPrefix, $result
     }
+
+    Write-Information -Tags (@($OperationTag, $ExitTag) + $tags) -MessageData:$MessageData
 }
 
 function Ok([string] $message = $null)
 {
-    return Result $okResult $message
+    return Result $okResult $message -tags $OkTag
 }
 
 function Skip([string] $message = $null)
 {
-    return Result $skipResult $message
+    return Result $skipResult $message -tags $SkipTag
 }
 
-function Failed([string] $message = $null)
+function Fail([string] $message = $null)
 {
-    return Result $failedResult $message
+    return Result $failedResult $message -tags $FailedTag
 }
 
 function Exit-Operation
@@ -231,8 +232,13 @@ function Exit-Operation
         [Parameter(Position = 0, ParameterSetName = 'Object')]
         [object] $InputObject,
 
+        # Explicit skip
         [Parameter(ParameterSetName = 'Object')]
         [switch] $Skip,
+
+        # Explicit failure
+        [Parameter(ParameterSetName = 'Object')]
+        [switch] $Fail,
 
         [Parameter(Mandatory, ParameterSetName = 'LastExitCode')]
         $LastExitCode
@@ -244,6 +250,11 @@ function Exit-Operation
         {
             'Object'
             {
+                if ($Fail)
+                {
+                    # Manual fail.
+                    return Fail $InputObject
+                }
                 if ($Skip)
                 {
                     # Manual skip.
@@ -257,7 +268,7 @@ function Exit-Operation
 
                 if ($errors = $InputObject | Where-Object { $_ -is [ErrorRecord] })
                 {
-                    return Failed $errors
+                    return Fail $errors
                 }
 
                 if ($skipRecord = $InputObject | Where-Object { $_ -is [InformationRecord] -and $_.Tags -ccontains $SkipTag })
@@ -273,14 +284,14 @@ function Exit-Operation
                 Write-Warning "Exit-Operation: is last exit code ${LastExitCode}"
                 switch ($LastExitCode)
                 {
-                    0 { return $okResult }
+                    0 { return Ok }
                     { $_ -gt 0 -and $_ -lt 65535 }
                     {
-                        return Result($failedResult, ("Exited with code {0}" -f $LastExitCode))
+                        return Failed ("Exited with code {0}" -f $LastExitCode)
                     }
                     default
                     {
-                        return Result($failedResult, ("Exited with code 0x{0:X8}" -f $LastExitCode))
+                        return Failed ("Exited with code 0x{0:X8}" -f $LastExitCode)
                     }
                 }
             }

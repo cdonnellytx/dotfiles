@@ -224,7 +224,7 @@ function Set-EnvironmentVariable
             return
         }
 
-        Invoke-Operation -Name "Set environment variable '${Name}'" {
+        Invoke-Operation -Name "Set environment variable '${Name}' = '${Value}' (target: ${Target})" {
             $Target | ForEach-Object {
                 # cdonnelly 2018-07-15:
                 # [Environment]::SetEnvironmentVariable for User can be slow, so check the value isn't the same first.
