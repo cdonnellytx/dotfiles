@@ -1,4 +1,4 @@
-#requires -version 7 -modules bootstrap.chezmoi, bootstrap.winget, Microsoft.PowerShell.Utility
+#requires -version 7 -modules bootstrap.chezmoi, Microsoft.PowerShell.Utility
 
 <#
 .SYNOPSIS
@@ -8,8 +8,12 @@ Will install apps if not found but not upgrade them.
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
-$workingTree = Get-ChezmoiWorkingTree
-$wingetManifestTemplate = Join-Path $workingTree 'assets/winget.json.tmpl' | Get-Item -ErrorAction Stop
+<#
+{{- $wingetManifest := joinPath .chezmoi.workingTree "assets/winget.json.tmpl" -}}
+assets/winget.json hash: {{ include $wingetManifest | sha256sum }}
+#>
+
+$wingetManifestTemplate = "{{ $wingetManifest }}" | Get-Item -ErrorAction Stop
 
 $wingetManifest = New-TemporaryFile -WhatIf:$false
 $wingetManifestTemplate | Get-Content -Raw | chezmoi execute-template --output $wingetManifest
