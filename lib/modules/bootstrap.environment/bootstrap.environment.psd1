@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.environment.psm1'
-    ModuleVersion = '6.0.3.2'
+    ModuleVersion = '6.1.0'
     GUID = '40f90583-6d4a-49e8-87ff-c8e2bcf48950'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -19,8 +19,9 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.4'
+    RequiredModules = @(
+        'bootstrap.core'
+    )
 }
-
-
-
-

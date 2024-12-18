@@ -1,7 +1,3 @@
-#requires -version 7.0
-
-param()
-
 Set-StrictMode -Version Latest
 
 # DriverData (Windows 10 1803+) is C:\Windows\System32\Drivers\DriverData

@@ -1,5 +1,4 @@
-#requires -version 7.0
-#requires -modules bootstrap.environment
+Set-StrictMode -Version Latest
 
 if (!$IsWindows)
 {

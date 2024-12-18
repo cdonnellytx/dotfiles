@@ -1,7 +1,5 @@
-#requires -version 7.0
-
-Using Namespace System.Collections.Generic
-Using Namespace System.Management.Automation
+using namespace System.Collections.Generic
+using namespace System.Management.Automation
 
 Set-StrictMode -Version Latest
 

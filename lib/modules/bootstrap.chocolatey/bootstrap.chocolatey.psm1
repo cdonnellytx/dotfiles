@@ -1,6 +1,3 @@
-#requires -version 7.0
-#requires -modules bootstrap.os
-
 Set-StrictMode -Version Latest
 
 $script:choco = $null

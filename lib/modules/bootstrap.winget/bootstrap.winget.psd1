@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.winget.psm1'
-    ModuleVersion = '0.9.0'
+    ModuleVersion = '0.10.0'
     GUID = '33dd3070-d3c7-4781-804e-5b5ff49d9eac'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -13,9 +13,11 @@
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.4'
     RequiredModules = @(
-        'bootstrap.utility',
+        'bootstrap.core'
+        'bootstrap.utility'
         'Microsoft.WinGet.Client'
     )
 }
-

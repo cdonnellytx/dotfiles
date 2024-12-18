@@ -2,6 +2,8 @@ using namespace System.Collections.Generic
 using namespace System.Diagnostics.CodeAnalysis
 using namespace System.Management.Automation
 
+Set-StrictMode -Version Latest
+
 function Write-Progress
 {
     [CmdletBinding()]

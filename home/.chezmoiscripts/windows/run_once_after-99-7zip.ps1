@@ -14,4 +14,4 @@ if (!$7zipPath)
     exit 1
 }
 
-Add-PathVariable -Name PATH -Target User, Process -Value $7zipPath
+Add-PathVariable -Name PATH -Target User -Value $7zipPath

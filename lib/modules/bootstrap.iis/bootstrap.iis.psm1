@@ -1,4 +1,4 @@
-#requires -version 7.0 -RunAsAdministrator
+#requires -RunAsAdministrator
 
 using namespace System.Security.AccessControl
 

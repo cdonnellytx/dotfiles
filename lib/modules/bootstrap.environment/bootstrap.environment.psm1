@@ -1,12 +1,9 @@
-#requires -version 7.0 -modules bootstrap.ux
-
-Using Namespace System
-Using Namespace System.Collections.Generic
-Using Namespace System.Diagnostics.CodeAnalysis
-Using Namespace System.IO
+using namespace System
+using namespace System.Collections.Generic
+using namespace System.Diagnostics.CodeAnalysis
+using namespace System.IO
 
 Set-StrictMode -Version Latest
-
 
 [EnvironmentVariableTarget[]] $AllTargets = [Enum]::GetValues([EnvironmentVariableTarget]) | Sort-Object -Descending
 

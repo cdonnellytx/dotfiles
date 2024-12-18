@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.chocolatey.psm1'
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '0.2.0'
     GUID = '6c85c829-21f8-44bc-9fdc-702f103afe1c'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -15,4 +15,9 @@
     CmdletsToExport = @()
     VariablesToExport =  @()
     AliasesToExport = @()
+
+    PowerShellVersion = '7.4'
+    RequiredModules = @(
+        'bootstrap.core'
+    )
 }

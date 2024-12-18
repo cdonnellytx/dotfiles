@@ -1,5 +1,4 @@
-#requires -version 7.0
-#requires -modules bootstrap.logging
+Set-StrictMode -Version Latest
 
 $gh = Get-Command -ErrorAction Stop -CommandType Application -Name 'gh'
 

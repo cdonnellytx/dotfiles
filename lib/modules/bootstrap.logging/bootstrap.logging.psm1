@@ -1,6 +1,3 @@
-#requires -version 7.0
-#requires -module bootstrap.fs
-
 Set-StrictMode -Version Latest
 
 class LogInfo

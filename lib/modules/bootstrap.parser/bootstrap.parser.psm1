@@ -1,5 +1,3 @@
-#requires -version 7.0
-
 using namespace System.Collections.Generic
 using namespace System.IO
 using namespace Microsoft.Win32

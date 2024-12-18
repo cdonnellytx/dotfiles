@@ -1,4 +1,4 @@
-#requires -version 7.0
+Set-StrictMode -Version Latest
 
 # Requires Docker to exist.
 $docker = Get-Command -Name 'docker' -ErrorVariable err
