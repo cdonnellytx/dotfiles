@@ -33,16 +33,16 @@
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Microsoft.Edge" },
 
-        // {{ if .personal }}
+        // {{ if .personal }} Drivers
         { "PackageIdentifier": "Logitech.GHUB" },
+        // {{ end }}
 
-        // Games
-        { "PackageIdentifier": "Blizzard.BattleNet" },
+        // {{ if .personal }} Games
         { "PackageIdentifier": "Valve.Steam" },
         // {{ end }}
 
 
-        // {{- if .development -}}
+        // {{- if .development -}} Development
         { "PackageIdentifier": "CoreyButler.NVMforWindows" },
         { "PackageIdentifier": "Docker.DockerDesktop" },
         { "PackageIdentifier": "GitHub.cli" },
@@ -72,7 +72,11 @@
     {
       "Packages": [
         { "PackageIdentifier": "9mz1snwt0n5d", "Title": "PowerShell" },
-        { "PackageIdentifier": "9p7knl5rwt25", "Title": "Sysinternals Suite" }
+        { "PackageIdentifier": "9p7knl5rwt25", "Title": "Sysinternals Suite" },
+
+        // {{ if .personal }} Games
+        { "PackageIdentifier": "XPDM5VSMTKQLBJ", "Title": "Battle.net" } // standalone installer requires additional args(!)
+        // {{- end }}
       ],
       "SourceDetails":
       {
