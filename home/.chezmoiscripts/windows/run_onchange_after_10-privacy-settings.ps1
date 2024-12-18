@@ -1,4 +1,4 @@
-#requires -version 7 -modules bootstrap.registry
+#requires -version 7 -modules bootstrap.registry -RunAsAdministrator
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
@@ -38,3 +38,6 @@ function Disable-BingSearch
 #
 Disable-AdvertisingId
 Disable-BingSearch
+
+Set-EnvironmentVariable -Name 'DOTNET_CLI_TELEMETRY_OPTOUT' -Value 'true' -Target Machine
+Set-EnvironmentVariable -Name 'POWERSHELL_TELEMETRY_OPTOUT' -Value 'true' -Target Machine
