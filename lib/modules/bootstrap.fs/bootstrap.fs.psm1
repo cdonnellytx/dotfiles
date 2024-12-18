@@ -1,3 +1,5 @@
+using namespace System.IO
+
 Set-StrictMode -Version Latest
 
 <#
