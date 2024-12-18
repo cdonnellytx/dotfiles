@@ -1,4 +1,4 @@
-#requires -version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.chezmoi, bootstrap.ux
+#requires -version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.chezmoi, bootstrap.fs, bootstrap.ux
 
 using namespace System.IO
 using namespace System.Management.Automation
@@ -80,9 +80,9 @@ Invoke-Operation "Rebuild file '.magic.mgc'" {
 
     $magicSourceDir = Join-Path $homeDir '.magic.d'
     $magicFile = Join-Path $homeDir '.magic.mgc'
-    $tmpdir = New-TemporaryDirectory
+    $tmpDir = New-TemporaryDirectory
 
-    Push-Location $tmpdir
+    Push-Location $tmpDir
     try
     {
         & $file --magic-file $magicSourceDir --compile
@@ -98,6 +98,6 @@ Invoke-Operation "Rebuild file '.magic.mgc'" {
     finally
     {
         Pop-Location
-        Remove-Item -Recurse -Force -ErrorAction Ignore
+        $tmpDir | Remove-Item -Recurse -Force -ErrorAction Ignore
     }
 }
