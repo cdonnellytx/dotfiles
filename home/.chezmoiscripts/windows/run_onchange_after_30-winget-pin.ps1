@@ -1,4 +1,4 @@
-#requires -version 7 -modules bootstrap.chezmoi, bootstrap.winget, Microsoft.PowerShell.Utility, Microsoft.WinGet.Client
+#requires -version 7 -modules bootstrap.winget, Microsoft.PowerShell.Utility
 
 using namespace System.Management.Automation
 
@@ -9,9 +9,7 @@ Pin WinGet app versions.
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
-$data = Get-ChezmoiData
-
-filter Where-Installed
+filter WhereInstalled
 {
     $_ | ConvertTo-WinGetItem | Where-Object { Test-WinGetItem $_ }
 }
@@ -25,9 +23,9 @@ filter Where-Installed
     'Mozilla.Firefox'
     'Obsidian.Obsidian'
     'SlackTechnologies.Slack'
-) | Where-Installed | Limit-WinGetPackage
+) | WhereInstalled | Limit-WinGetPackage
 
 # These apps update on their own and they range from being superior at their own updates tos requiring fiddling to being actively hostile to anything else updating them.
 @(
     'Logitech.GHUB'
-) | Where-Installed | Limit-WinGetPackage -Blocking
+) | WhereInstalled | Limit-WinGetPackage -Blocking
