@@ -135,6 +135,7 @@ function Get-WslPath
 
                     # Resolve any existing paths (including ones with wildcards).
                     # Treat all else as literals.
+                    $AbsolutePaths = $null
                     if ($_.IndexOfAny('*?') -ge 0)
                     {
                         # Wildcards.  Must try to expand.

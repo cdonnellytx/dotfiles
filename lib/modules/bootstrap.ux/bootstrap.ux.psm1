@@ -84,7 +84,11 @@ function Write-Header
     )
 
     # NOTE: we don't have new-text.  Write ANSI directly
-    Write-Host "`e[97m${Object}`e[0;0m"
+    [string] $str = "${Object}"
+
+    Write-Host "`e[97m${str}`e[0;0m"
+    Write-Host '=' * $str.Length
+    Write-Host ''
 }
 
 function Enter-Operation
@@ -189,13 +193,20 @@ enum Result
     Failed
 }
 
-$okResult = "[  `e[32mOK`e[0m  ]"
-$skipResult = "[ `e[33mSKIP`e[0m ]"
-$failedResult = "[`e[31mFAILED`e[0m]"
+#
+# Constants
+#
 
-$resultPrefix = ('-' * 10) + '> '
+$okResult = '[{0}  OK  {1}]' -f "`e[32;1m", $PSStyle.Reset
+$skipResult = '[{0} SKIP {1}]' -f $PSStyle.Formatting.Warning, $PSStyle.Reset
+$failedResult = "[`e[31mFAILED`e[0m]" -f $PSStyle.Formatting.Error, $PSStyle.Reset
+
+$resultPrefix = $PSStyle.Formatting.FeedbackAction + ('-' * 10) + '> ' + $PSStyle.Reset
 $failedEmptyMessage = $resultPrefix + $failedResult
 
+#
+# Results
+#
 function Result
 {
     [OutputType([string])]
@@ -213,6 +224,8 @@ function Result
     Write-Information -Tags (@($OperationTag, $ExitTag) + $tags) -MessageData:$MessageData
 }
 
+$separator = '-' * 80
+
 function Ok([object] $message = $null)
 {
     return Result $okResult $message -tags $OkTag
@@ -225,13 +238,11 @@ function Skip([object] $message = $null)
 
 function Fail([object] $message = $null)
 {
+    Result $failedResult $message -Tags $FailedTag
     if ($message -is [ErrorRecord] -or $message -is [IEnumerable[ErrorRecord]])
     {
-        Write-Output $failedEmptyMessage
-        $message | Write-Error -ErrorAction Continue
-        return
+        $message | Format-List * -Force
     }
-    return Result $failedResult $message -tags $FailedTag
 }
 
 function Test-Skip([object] $InputObject)
