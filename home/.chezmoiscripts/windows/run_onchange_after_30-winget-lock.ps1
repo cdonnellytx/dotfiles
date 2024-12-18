@@ -20,4 +20,5 @@ Lock-WinGet @splat -Id 'Obsidian.Obsidian'
 Lock-WinGet @splat -Id 'SlackTechnologies.Slack'
 
 # These apps update on their own and they range from requiring fiddling to being actively hostile to anything else updating them.
-Lock-WinGet @splat -Id 'Logitech.GHUB' -Blocking    # GHUB: actively hostile, will tell you so
+Lock-WinGet @splat -Id 'GnuPG.GnuPG' -Blocking      # GnuPG: is installed by Gpg4Win, no need to check for both.
+Lock-WinGet @splat -Id 'Logitech.GHUB' -Blocking    # GHUB: actively hostile. Not only does it update on its own, it refuses to let anything else update it.

@@ -11,7 +11,7 @@ $7zipPath = Get-ItemPropertyValue -LiteralPath 'HKLM:\Software\7-Zip' -Name 'Pat
 if (!$7zipPath)
 {
     Write-Error -Category InvalidOperation "7zip does not appear to be installed; cannot continue."
-    return
+    exit 1
 }
 
 Add-PathVariable -Name PATH -Target User, Process -Value $7zipPath

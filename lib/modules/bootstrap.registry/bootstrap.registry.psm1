@@ -53,42 +53,34 @@ function Confirm-RegistryEntry
 
         #  Specifies the value of the entry.
         [Parameter(Position = 2, ValueFromPipelineByPropertyName)]
-        [object] $Value,
-
-        # Returns an object that represents the registry entry. By default, this cmdlet does not generate any output.
-        [switch] $PassThru
+        [object] $Value
     )
 
     process
     {
-        Confirm-RegistryPath -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
+        if ($null -eq $PropertyType)
+        {
+            $PropertyType = if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }
+        }
 
-            if (!$PassThru) { Enter-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'" }
-            if ($_ | Get-ItemProperty -Name $Name -ErrorAction Ignore)
-            {
-                $_ | Set-ItemProperty -Name $Name -Value $Value -PassThru:$PassThru
-                if (!$PassThru)
+        Confirm-RegistryPath -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
+            Invoke-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'" {
+                if (!($_ | Get-ItemProperty -Name $Name -ErrorAction Ignore))
                 {
-                    Exit-Operation -Skip "already set"
+                    # does not exist, add it
+                    $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $pt
+                    return
                 }
 
+                # It exists, compare the value
+                if ($Value -eq ($_ | Get-ItemPropertyValue -Name $Name))
+                {
+                    return Skip-Operation "already set"
+                }
+
+                $_ | Set-ItemProperty -Name $Name -Value $Value
                 return
-            }
 
-            $pt = $PropertyType
-            if ($null -eq $pt)
-            {
-                $pt = if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }
-            }
-
-            $result = $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $pt
-            if ($PassThru)
-            {
-                return $result
-            }
-            else
-            {
-                Exit-Operation $result
             }
         }
     }
