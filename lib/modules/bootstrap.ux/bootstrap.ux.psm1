@@ -106,17 +106,19 @@ $SkipTag = 'bootstrap.ux:skip'
 $FailedTag = 'bootstrap.ux:failed'
 $ExitTag = 'bootstrap.ux:exit'
 
+class SkipException : Exception
+{
+    SkipException() : base() {}
+    SkipException([string] $Message) : base($Message) {}
+}
+
 function Skip-Operation
 {
     [CmdletBinding()]
-    param
-    (
-        [Parameter()]
-        [object] $MessageData
-    )
+    [OutputType([void])]
+    param([object] $MessageData)
 
-    Write-Error -Category
-    Write-Information -Tags $OperationTag, $SkipTag -MessageData $MessageData -InformationAction Ignore -InformationVariable iv
+    throw [SkipException]::new($MessageData)
 }
 
 function Invoke-Operation
@@ -151,9 +153,7 @@ function Invoke-Operation
 
         try
         {
-            Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList | ForEach-Object {
-                Write-Output $_
-            }
+            Invoke-Command -ScriptBlock:$ScriptBlock -ArgumentList:$ArgumentList
             $success = $?
 
             if ($null -ne $LASTEXITCODE)
@@ -168,6 +168,11 @@ function Invoke-Operation
             {
                 throw "Unknown or unspecified error"
             }
+        }
+        catch [SkipException]
+        {
+            Exit-Operation -Skip $_
+            return
         }
         catch
         {
@@ -188,13 +193,13 @@ $okResult = "[  `e[32mOK`e[0m  ]"
 $skipResult = "[ `e[33mSKIP`e[0m ]"
 $failedResult = "[`e[31mFAILED`e[0m]"
 
-
 $resultPrefix = ('-' * 10) + '> '
+$failedEmptyMessage = $resultPrefix + $failedResult
 
 function Result
 {
     [OutputType([string])]
-    param([string] $result, [string] $message, [string[]] $tags)
+    param([string] $result, [object] $message, [string[]] $tags)
 
     $messageData = if ($message)
     {
@@ -208,19 +213,30 @@ function Result
     Write-Information -Tags (@($OperationTag, $ExitTag) + $tags) -MessageData:$MessageData
 }
 
-function Ok([string] $message = $null)
+function Ok([object] $message = $null)
 {
     return Result $okResult $message -tags $OkTag
 }
 
-function Skip([string] $message = $null)
+function Skip([object] $message = $null)
 {
     return Result $skipResult $message -tags $SkipTag
 }
 
-function Fail([string] $message = $null)
+function Fail([object] $message = $null)
 {
+    if ($message -is [ErrorRecord] -or $message -is [IEnumerable[ErrorRecord]])
+    {
+        Write-Output $failedEmptyMessage
+        $message | Write-Error -ErrorAction Continue
+        return
+    }
     return Result $failedResult $message -tags $FailedTag
+}
+
+function Test-Skip([object] $InputObject)
+{
+    $InputObject -is [InformationRecord] -and $InputObject.Tags -ccontains $SkipTag
 }
 
 function Exit-Operation
@@ -271,9 +287,9 @@ function Exit-Operation
                     return Fail $errors
                 }
 
-                if ($skipRecord = $InputObject | Where-Object { $_ -is [InformationRecord] -and $_.Tags -ccontains $SkipTag })
+                if (Test-Skip $InputObject)
                 {
-                    return Skip $skipRecord.MessageData
+                    return Skip $InputObject.MessageData
                 }
 
                 return Ok $InputObject

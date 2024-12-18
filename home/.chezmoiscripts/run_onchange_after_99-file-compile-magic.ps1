@@ -97,7 +97,7 @@ Invoke-Operation "Rebuild file '.magic.mgc'" {
 
     if (!($file = Get-FileCommand -ErrorAction Ignore))
     {
-        return Skip-Operation "'file' command not found"
+        Skip-Operation "'file' command not found"
     }
 
     $magicSourceDir = Join-Path $homeDir '.magic.d'

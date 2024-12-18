@@ -18,7 +18,7 @@ function Confirm-PSResourceRepositoryTrusted
             Invoke-Operation "Trusting PS repository '$($_.Name)'" {
                 if ($_.Trusted)
                 {
-                    return Skip-Operation "already trusted"
+                    Skip-Operation "already trusted"
                 }
 
                 $_ | Set-PSResourceRepository -Trusted -WhatIf:$WhatIfPreference

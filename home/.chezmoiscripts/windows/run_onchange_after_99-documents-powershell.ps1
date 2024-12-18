@@ -70,7 +70,7 @@ else
                 $destinationContent = $destinationItem | Get-Content -Raw
                 if ($destinationContent.Trim() -eq $content.Trim())
                 {
-                    return Skip-Operation "already exists"
+                    Skip-Operation "already exists"
                 }
 
                 $destinationItem | Rename-Item -NewName ('{0}.bak.{1:yyyyMMddHHmmss}' -f $destinationItem.Name, [DateTime]::UtcNow)
