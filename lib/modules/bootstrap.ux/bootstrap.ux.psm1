@@ -87,7 +87,7 @@ function Write-Header
     [string] $str = "${Object}"
 
     Write-Host "`e[97m${str}`e[0;0m"
-    Write-Host '=' * $str.Length
+    Write-Host ('=' * $str.Length)
     Write-Host ''
 }
 
