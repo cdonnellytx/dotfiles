@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.fs.psm1'
-    ModuleVersion = '0.2.0'
+    ModuleVersion = '0.3.0'
     GUID = '4e1d676e-c364-4259-99d3-6353b258ac7c'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -8,7 +8,8 @@
     FunctionsToExport = @(
         'Get-FileSystemDrive',
         'Confirm-PathIsContainer',
-        'Get-BootstrapTempDirectory'
+        'Get-BootstrapTempDirectory',
+        'New-TemporaryDirectory'
     )
     CmdletsToExport = @()
     VariablesToExport = @()

@@ -25,10 +25,10 @@ function Confirm-PathIsContainer
         [switch] $PassThru
     )
 
-    $Result = Get-Item -Path:$Path -ErrorAction Ignore -Force:$Force
+    $Result = Get-Item -Path:$Path -ErrorAction:Ignore -Force:$Force
     if (!$Result)
     {
-        $Result = mkdir -Path:$Path -ErrorAction Stop -Force:$Force -WhatIf:$WhatIfPreference
+        $Result = New-Item -Path:$Path -ItemType:Directory -ErrorAction:Stop -Force:$Force -WhatIf:$WhatIfPreference
     }
 
     if ($PassThru)
@@ -48,5 +48,28 @@ function Get-BootstrapTempDirectory
     (
     )
 
-    Confirm-PathIsContainer -LiteralPath (Join-Path $Env:TEMP 'bootstrap-windows') -PassThru
+    Confirm-PathIsContainer -LiteralPath (Join-Path $Env:TEMP 'bootstrap-dotfiles') -PassThru
+}
+
+<#
+.SYNOPSIS
+Creates a temporary directory which should be cleaned up later.
+#>
+function New-TemporaryDirectory
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    [OutputType([System.IO.DirectoryInfo])]
+    param()
+
+    if (!$PSCmdlet.ShouldProcess([Path]::GetTempPath(), "New-TemporaryDirectory"))
+    {
+        return $null
+    }
+
+    # MSCRAP: Can't generate a unique temp file name without it creating the file.
+    $tmpFile = New-TemporaryFile
+    $tmpFullName = $tmpFile.FullName
+    $tmpFile.Delete()
+
+    New-Item -Path $tmpFullName -ItemType:Directory -WhatIf:$WhatIfPreference
 }

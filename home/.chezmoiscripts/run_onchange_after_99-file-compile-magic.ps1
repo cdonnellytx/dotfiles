@@ -12,28 +12,6 @@ param()
 
 <#
 .SYNOPSIS
-Creates a temporary directory which should be cleaned up later.
-#>
-function New-TemporaryDirectory
-{
-    [CmdletBinding(SupportsShouldProcess)]
-    [OutputType([DirectoryInfo])]
-    param()
-
-    if (!$PSCmdlet.ShouldProcess([Path]::GetTempPath(), "New-TemporaryDirectory"))
-    {
-        return $null
-    }
-
-    # MSCRAP: Can't generate a unique temp file name without it creating the file.
-    $tmpFile = New-TemporaryFile
-    $tmpFile.Delete()
-
-    mkdir $tmpFile
-}
-
-<#
-.SYNOPSIS
 Gets the `file` command.
 #>
 function Get-FileCommand
@@ -120,6 +98,6 @@ Invoke-Operation "Rebuild file '.magic.mgc'" {
     finally
     {
         Pop-Location
-        Remove-Item -Recurse $tmpdir -Force -ErrorAction Ignore
+        Remove-Item -Recurse -Force -ErrorAction Ignore
     }
 }
