@@ -1,5 +1,4 @@
-#!/usr/bin/env -S pwsh -NoProfile
-#requires -version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.ux
+#requires -version 7 -Modules Microsoft.PowerShell.Utility, bootstrap.chezmoi, bootstrap.ux
 
 using namespace System.IO
 using namespace System.Management.Automation
@@ -92,20 +91,23 @@ if (!$PSCmdlet.ShouldProcess($magicItem, "Build magic file"))
     return $result
 }
 
+$homeDir = Get-ChezmoiHomeDir
+
 Invoke-Operation "Rebuild file '.magic.mgc'" {
 
-    if (!($file = Get-FileCommand -ErrorAction SilentlyContinue))
+    if (!($file = Get-FileCommand -ErrorAction Ignore))
     {
         return Skip-Operation "'file' command not found"
     }
 
-    $magicFile = Join-Path $HOME '.magic.mgc'
+    $magicSourceDir = Join-Path $homeDir '.magic.d'
+    $magicFile = Join-Path $homeDir '.magic.mgc'
     $tmpdir = New-TemporaryDirectory
 
     Push-Location $tmpdir
     try
     {
-        & $file --magic-file "${HOME}/.magic.d" --compile
+        & $file --magic-file $magicSourceDir --compile
         if (!$?)
         {
             Write-Error 'FAILED: magic file not compiled'

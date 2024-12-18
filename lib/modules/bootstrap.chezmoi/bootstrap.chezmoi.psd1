@@ -9,6 +9,7 @@
         'Invoke-Chezmoi',
         'Invoke-ChezmoiTemplate',
         'Get-ChezmoiData',
+        'Get-ChezmoiHomeDir',
         'Get-ChezmoiSourceDir',
         'Get-ChezmoiWorkingTree'
     )

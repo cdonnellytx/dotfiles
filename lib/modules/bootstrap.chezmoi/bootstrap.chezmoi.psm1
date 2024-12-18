@@ -66,6 +66,30 @@ function Get-ChezmoiData
     Invoke-Chezmoi -Command 'data' --format json | ConvertFrom-Json
 }
 
+filter ToPath([switch] $AsObject)
+{
+    if ($AsObject)
+    {
+        return Get-Item -LiteralPath:$_
+    }
+
+    $provider = $null
+    return $PSCmdlet.GetResolvedProviderPathFromPSPath($_, [ref] $provider)
+}
+
+<#
+.SYNOPSIS
+Gets the Chezmoi home directory.
+#>
+function Get-ChezmoiHomeDir
+{
+    [CmdletBinding()]
+    [OutputType([string])]
+    [OutputType([IO.DirectoryInfo])]
+    param([switch] $AsObject)
+
+    $Env:CHEZMOI_HOME_DIR ?? (Get-ChezmoiData).chezmoi.homeDir | ToPath -AsObject:$AsObject
+}
 <#
 .SYNOPSIS
 Gets the Chezmoi source directory.
@@ -75,21 +99,9 @@ function Get-ChezmoiSourceDir
     [CmdletBinding()]
     [OutputType([string])]
     [OutputType([IO.DirectoryInfo])]
-    param
-    (
-        [switch] $AsObject
-    )
+    param([switch] $AsObject)
 
-    $path = $Env:CHEZMOI_SOURCE_DIR ?? (Get-ChezmoiData).chezmoi.sourceDir
-
-    if ($AsObject)
-    {
-        return Get-Item -LiteralPath:$path
-    }
-
-
-    $provider = $null
-    $PSCmdlet.GetResolvedProviderPathFromPSPath($path, [ref] $provider)
+    $Env:CHEZMOI_SOURCE_DIR ?? (Get-ChezmoiData).chezmoi.sourceDir | ToPath -AsObject:$AsObject
 }
 
 <#
@@ -101,21 +113,9 @@ function Get-ChezmoiWorkingTree
     [CmdletBinding()]
     [OutputType([string])]
     [OutputType([IO.DirectoryInfo])]
-    param
-    (
-        [switch] $AsObject
-    )
+    param([switch] $AsObject)
 
-    $path = $Env:CHEZMOI_WORKING_TREE ?? (Get-ChezmoiData).chezmoi.workingTree
-
-    if ($AsObject)
-    {
-        return Get-Item -LiteralPath:$path
-    }
-
-
-    $provider = $null
-    $PSCmdlet.GetResolvedProviderPathFromPSPath($path, [ref] $provider)
+    $Env:CHEZMOI_WORKING_TREE ?? (Get-ChezmoiData).chezmoi.workingTree | ToPath -AsObject:$AsObject
 }
 
 function Invoke-ChezmoiTemplate
