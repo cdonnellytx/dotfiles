@@ -86,6 +86,37 @@ function Confirm-RegistryEntry
     }
 }
 
+function mkitem([string] $LiteralPath)
+{
+    # MSCRAP: mkdir doesn't create a tree structure in the registry provider.
+    # So we have to crawl parents ourselves, and create the parents as needed.
+    $selfOrAncestors = [Stack[string]]::new()
+
+    for ($item = $LiteralPath; $item; $item = Split-Path $item)
+    {
+        if (Test-Path -LiteralPath $item)
+        {
+            break
+        }
+        $selfOrAncestors.Push($item)
+    }
+
+    if ($selfOrAncestors.Count -eq 0)
+    {
+        # oh, it already exists?
+        Write-Warning "Path already exists! ${LiteralPath}"
+        return Get-Item -LiteralPath:$LiteralPath
+    }
+
+    # Now create the keys, returning the one the user wants.
+    while ($selfOrAncestors.TryPop([ref] $item))
+    {
+        $result = New-Item -Path $item
+    }
+
+    return $result
+}
+
 <#
 .SYNOPSIS
 Gets the registry paths, or creates them if not found.
@@ -128,25 +159,7 @@ function Confirm-RegistryPath
                     }
                 }
 
-                # MSCRAP: mkdir doesn't create a tree structure in the registry provider.
-                # So we have to crawl parents ourselves, and create the parents as needed.
-
-                $selfOrAncestors = [Stack[string]]::new()
-
-                for ($item = $_; $item; $item = Split-Path $item)
-                {
-                    if (Test-Path -LiteralPath $item)
-                    {
-                        break
-                    }
-                    $selfOrAncestors.Push($item)
-                }
-
-                # Now create the keys, returning the one the user wants.
-                while ($selfOrAncestors.TryPop([ref] $item))
-                {
-                    $result = New-Item -Path $item
-                }
+                $result = mkitem $_
 
                 if ($PassThru)
                 {
