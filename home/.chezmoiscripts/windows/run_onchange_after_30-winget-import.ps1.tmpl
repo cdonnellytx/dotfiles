@@ -15,8 +15,9 @@ assets/winget/winget.json hash: {{ include $wingetManifestTemplatePath | sha256s
 
 $wingetManifestTemplate = "{{ $wingetManifestTemplatePath }}" | Get-Item -ErrorAction Stop
 
+# MSCRAP: winget import cannot process JSON comments, so we have to clean those out (by using ConvertTo/From-Json).
 $wingetManifest = New-TemporaryFile -WhatIf:$false
-$wingetManifestTemplate | Get-Content -Raw | chezmoi execute-template --output $wingetManifest
+$wingetManifestTemplate | Get-Content -Raw | chezmoi execute-template | ConvertFrom-Json | ConvertTo-Json -Depth 4 | Out-File -FilePath $wingetManifest
 
 Write-Verbose "winget manifest at ${wingetManifest}"
 
