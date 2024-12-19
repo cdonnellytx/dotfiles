@@ -22,6 +22,11 @@
 {{      $ephemeral = eq $kind "ephemeral" -}}
 {{- end -}}
 
+{{- /* Support flags */ -}}
+{{- $aws := $work -}}
+{{- $azure := false -}}
+{{- $games := $personal -}}
+
 # PowerShell: use Core
 [interpreters.ps1]
     command = "pwsh"
@@ -47,6 +52,6 @@
     ephemeral = {{ $ephemeral | toToml }}
 
 [data.supports]
-    {{- if hasKey . "supports" -}}
-    {{ .supports | toToml | nindent 4 }}
-    {{- end -}}
+    aws = {{ $aws | toToml }}
+    azure = {{ $azure | toToml }}
+    games = {{ $games | toToml }}

@@ -40,7 +40,7 @@
         { "PackageIdentifier": "Logitech.GHUB" },
         // {{ end }}
 
-        // {{ if .personal }} Games
+        // {{ if .supports.games }} Games
         { "PackageIdentifier": "Valve.Steam" },
         // {{ end }}
 
@@ -81,7 +81,7 @@
         { "PackageIdentifier": "9p7knl5rwt25", "Title": "Sysinternals Suite" },
         { "PackageIdentifier": "9NBHCS1LX4R0", "Title": "Paint.NET" },
 
-        // {{ if .personal }} Games
+        // {{ if .supports.games }}
         { "PackageIdentifier": "XPDM5VSMTKQLBJ", "Title": "Battle.net" } // standalone installer requires additional args(!)
         // {{- end }}
       ],
