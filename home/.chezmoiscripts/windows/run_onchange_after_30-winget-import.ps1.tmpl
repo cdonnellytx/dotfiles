@@ -9,16 +9,16 @@ Will install apps if not found but not upgrade them.
 param()
 
 <#
-{{- $wingetManifest := joinPath .chezmoi.workingTree "assets/winget.json.tmpl" -}}
-assets/winget.json hash: {{ include $wingetManifest | sha256sum }}
+{{- $wingetManifestTemplatePath := joinPath .chezmoi.workingTree "assets/winget.json.tmpl" -}}
+assets/winget.json hash: {{ include $wingetManifestTemplatePath | sha256sum }}
 #>
 
-$wingetManifestTemplate = "{{ $wingetManifest }}" | Get-Item -ErrorAction Stop
+$wingetManifestTemplate = "{{ $wingetManifestTemplatePath }}" | Get-Item -ErrorAction Stop
 
 $wingetManifest = New-TemporaryFile -WhatIf:$false
 $wingetManifestTemplate | Get-Content -Raw | chezmoi execute-template --output $wingetManifest
 
-Write-Verbose "winget file template at ${wingetManifest}"
+Write-Verbose "winget manifest at ${wingetManifest}"
 
 Invoke-Operation "Import WinGet manifest" -WhatIf:$WhatIfPreference {
     # MSCRAP: Microsoft.WinGet.Client has export but NOT import (1.10.40-beta)

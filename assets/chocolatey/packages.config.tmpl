@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packages>
+  <!-- Fonts -->
+  <package id="FiraCode" />
+  <package id="nerd-fonts-BigBlueTerminal" />
+  <package id="nerd-fonts-CascadiaCode" />
+  <package id="nerd-fonts-FiraCode" />
+
+  <!-- Tools -->
+  <package id="unzip" />
+  <package id="zip" />
+
+  {{if .personal}}
+  <package id="nvidia-display-driver" />
+  {{end}}
+
+  {{if .work}}
+  <package id="UrlRewrite" />
+  {{end}}
+</packages>

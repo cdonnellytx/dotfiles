@@ -12,7 +12,7 @@
     "*.ps1.tmpl": "powershell",
     "*.toml.tmpl": "toml",
     "**/dot_config/git/config.tmpl": "toml", // because gitconfig isn't an option
-    "**/NuGet/**/*.config.tmpl": "xml"
+    "**/{Chocolatey,NuGet}/**/*.config.tmpl": "xml"
   },
 
   "go-template.languages": [

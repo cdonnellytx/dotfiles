@@ -1,0 +1,35 @@
+#requires -version 7 -modules Microsoft.PowerShell.Utility -RunAsAdministrator
+
+<#
+.SYNOPSIS
+Import Chocolatey installed apps.
+Will install apps if not found but not upgrade them.
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+<#
+{{- $chocoManifestTemplatePath := joinPath .chezmoi.workingTree "assets/chocolatey/packages.config.tmpl" -}}
+assets/winget.json hash: {{ include $chocoManifestTemplatePath | sha256sum }}
+#>
+
+$chocoManifestTemplate = "{{ $chocoManifestTemplatePath }}" | Get-Item -ErrorAction Stop
+
+# The file has to end in .config.
+$chocoManifest = New-TemporaryFile -WhatIf:$false | ForEach-Object { $_ | Rename-Item -NewName ("$($_.Name + '.config')") -PassThru }
+$chocoManifestTemplate | Get-Content -Raw | chezmoi execute-template --output $chocoManifest
+
+Write-Verbose "choco packages.config at ${chocoManifest}"
+
+$chocoArgs = @('--yes', '--accept-license', '--limit-output')
+if ($VerbosePreference) { $chocoArgs += '--verbose' }
+if ($DebugPreference) { $chocoArgs += '--debug' }
+if ($WhatIfPreference) { $chocoArgs += '--what-if' }
+
+Invoke-Operation "Import Chocolatey packages.config" -WhatIf:$WhatIfPreference {
+    choco install $chocoManifest @chocoArgs
+    if (!$?)
+    {
+        Write-Error ("chocolatey exited with code 0x{0:X8}" -f $LASTEXITCODE)
+    }
+}
