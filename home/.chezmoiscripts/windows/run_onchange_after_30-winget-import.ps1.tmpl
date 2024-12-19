@@ -9,8 +9,8 @@ Will install apps if not found but not upgrade them.
 param()
 
 <#
-{{- $wingetManifestTemplatePath := joinPath .chezmoi.workingTree "assets/winget.json.tmpl" -}}
-assets/winget.json hash: {{ include $wingetManifestTemplatePath | sha256sum }}
+{{- $wingetManifestTemplatePath := joinPath .chezmoi.workingTree "assets/winget/winget.json.tmpl" -}}
+assets/winget/winget.json hash: {{ include $wingetManifestTemplatePath | sha256sum }}
 #>
 
 $wingetManifestTemplate = "{{ $wingetManifestTemplatePath }}" | Get-Item -ErrorAction Stop
