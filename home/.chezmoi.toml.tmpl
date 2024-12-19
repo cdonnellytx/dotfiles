@@ -1,20 +1,25 @@
 {{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+
+{{- $name := promptStringOnce . "name" "❔ What is your full name" -}}
+{{- $email := promptStringOnce . "email" "❔ What is your email" -}}
+
+{{- /* Machine type */ -}}
 {{- $work := false -}}{{/* true if this machine is a work machine */}}
 {{- $personal := false -}}{{/* true if this machine is a personal machine */}}
+{{- $ephemeral := false -}}{{/* true if this machine is ephemeral */}}
 
 {{- if hasPrefix "CAI-" .chezmoi.hostname -}}
 {{-     $work = true -}}
-{{- else -}}
+{{- else if hasSuffix "saurus" .chezmoi.hostname -}}
 {{-     $personal = true -}}
-{{- end -}}
-
-{{- $development := or $work $personal }}
-
-{{- $email := "" -}}
-{{- if $work -}}
-{{-     $email = print "chris.donnelly@" "coxautoinc.com" -}}
+{{- else if has .chezmoi.hostname (list "synology") -}}
+{{-     $personal = true -}}
 {{- else -}}
-{{-     $email = print "cdonnelly@" "69bytes.com" -}}
+{{      $kindChoices := list "personal" "work" "ephemeral" -}}
+{{      $kind := promptChoice (print "❔ What kind of machine is " .chezmoi.hostname) $kindChoices -}}
+{{      $work = eq $kind "work" -}}
+{{      $personal = eq $kind "personal" -}}
+{{      $ephemeral = eq $kind "ephemeral" -}}
 {{- end -}}
 
 # PowerShell: use Core
@@ -35,7 +40,13 @@
     PSModulePath = {{ joinPath .chezmoi.workingTree "lib/modules"  | toToml }}
 
 [data]
-    development = {{ $development | toToml }}
+    name = {{ $name | toToml }}
     email = {{ $email | toToml }}
     personal = {{ $personal | toToml }}
     work = {{ $work | toToml }}
+    ephemeral = {{ $ephemeral | toToml }}
+
+[data.supports]
+    {{- if hasKey . "supports" -}}
+    {{ .supports | toToml | nindent 4 }}
+    {{- end -}}
