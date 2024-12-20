@@ -1,12 +1,12 @@
 ﻿" Syntaxes
 Plug 'cdonnellytx/splunk.vim'
-Plug 'cdonnellytx/t4-vim'
-Plug 'cdonnellytx/vim-ps1'
 Plug 'elzr/vim-json'
 Plug 'jsmulrow/vim-githublink'
 Plug 'juliosueiras/cakebuild.vim'
 Plug 'martinda/Jenkinsfile-vim-syntax'
 Plug 'neoclide/jsonc.vim'
+Plug 'pprovost/vim-ps1'
+Plug 'sillyotter/t4-vim'
 Plug 'rhysd/vim-gfm-syntax'
 
 " editorconfig/editorconfig-vim: not needed since 9.0.1799
