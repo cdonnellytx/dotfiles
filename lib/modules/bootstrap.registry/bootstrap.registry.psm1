@@ -46,42 +46,44 @@ function Confirm-RegistryEntry
         [Parameter(Position = 1, Mandatory, ValueFromPipelineByPropertyName)]
         [string] $Name,
 
+        #  Specifies the value of the entry.
+        [Parameter(Position = 2, ValueFromPipelineByPropertyName)]
+        [object] $Value,
+
         # Specifies the type of property that this cmdlet adds.
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias("Type")]
-        [Nullable[Microsoft.Win32.RegistryValueKind]] $PropertyType,
-
-        #  Specifies the value of the entry.
-        [Parameter(Position = 2, ValueFromPipelineByPropertyName)]
-        [object] $Value
+        [Nullable[Microsoft.Win32.RegistryValueKind]] $PropertyType = (if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String })
     )
 
     process
     {
-        if ($null -eq $PropertyType)
-        {
-            $PropertyType = if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }
-        }
-
         Confirm-RegistryPath -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
-            Invoke-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'" {
-                if (!($_ | Get-ItemProperty -Name $Name -ErrorAction Ignore))
+            Enter-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'"
+            try
+            {
+                if (!($_ | Get-ItemProperty -Name $Name -ErrorAction:Ignore))
                 {
                     # does not exist, add it
-                    $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $pt
+                    $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $PropertyType
                     return
                 }
 
                 # It exists, compare the value
                 if ($Value -eq ($_ | Get-ItemPropertyValue -Name $Name))
                 {
-                    return Skip-Operation "already set"
+                    Skip-Operation "already set"
+                    return
                 }
 
-                $_ | Set-ItemProperty -Name $Name -Value $Value
-                return
-
+                $_ | Set-ItemProperty -Name $Name -Value $Value -PropertyType $PropertyType
+                Exit-Operation
             }
+            catch
+            {
+                Exit-Operation $_
+            }
+
         }
     }
 }

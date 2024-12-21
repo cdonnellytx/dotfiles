@@ -224,7 +224,18 @@ function Result
     Write-Information -Tags (@($OperationTag, $ExitTag) + $tags) -MessageData:$MessageData
 }
 
-$separator = '-' * 80
+function Resolve-SkipException
+{
+    [OutputType([SkipException])]
+    param([object] $InputObject)
+
+    switch ($InputObject)
+    {
+        { $_ -is [SkipException] } { return $_ }
+        { $_ -is [ErrorRecord] -and $_.Exception -is [SkipException] } { return $_.Exception }
+        default { return $null }
+    }
+}
 
 function Ok([object] $message = $null)
 {
@@ -233,6 +244,11 @@ function Ok([object] $message = $null)
 
 function Skip([object] $message = $null)
 {
+    if ($ex = Resolve-SkipException $message)
+    {
+        $message = $ex.Message
+    }
+
     return Result $skipResult $message -tags $SkipTag
 }
 
@@ -245,10 +261,6 @@ function Fail([object] $message = $null)
     }
 }
 
-function Test-Skip([object] $InputObject)
-{
-    $InputObject -is [InformationRecord] -and $InputObject.Tags -ccontains $SkipTag
-}
 
 function Exit-Operation
 {
@@ -293,14 +305,14 @@ function Exit-Operation
                     return Ok
                 }
 
+                if ($skipException = Resolve-SkipException $InputObject)
+                {
+                    return Skip $skipException
+                }
+
                 if ($errors = $InputObject | Where-Object { $_ -is [ErrorRecord] })
                 {
                     return Fail $errors
-                }
-
-                if (Test-Skip $InputObject)
-                {
-                    return Skip $InputObject.MessageData
                 }
 
                 return Ok $InputObject
