@@ -15,5 +15,9 @@ Confirm-RegistryEntry -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVers
 # Sudo (Windows 11 24H2 and later)
 if ((Get-ChezmoiData).chezmoi.windowsVersion.currentBuild -ge 26052)
 {
+    # 0 - disabled
+    # 1 - new window
+    # 2 - with input disabled
+    # 3 - inline
     Confirm-RegistryEntry -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo' -Name 'Enabled' -PropertyType DWORD -Value 3
 }
