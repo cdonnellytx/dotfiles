@@ -1,0 +1,12 @@
+#requires -version 7 -modules bootstrap.ux
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+<#
+{{- $configPath := joinPath .chezmoi.workingTree "assets/sysinternals/ProcmonConfiguration.pmc" -}}
+assets/sysinternals/ProcmonConfiguration.pmc hash: {{ include $configPath | sha256sum }}
+#>
+
+Invoke-Operation "Configure Process Monitor" {
+    procmon /LoadConfig "{{ $configPath }}"  /accepteula /terminate
+}
