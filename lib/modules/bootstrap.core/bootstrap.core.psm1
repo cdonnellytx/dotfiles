@@ -49,7 +49,8 @@ $ExecutionContext.SessionState.Module.OnRemove = {
 #
 # Now override.
 #
-$global:errorActionPreference = 'Stop'
+$global:ErrorActionPreference = 'Stop'
+$global:PSNativeCommandUseErrorActionPreference = $true
 $global:InformationPreference = 'Continue'
 if (Test-IsTruthy $Env:CHEZMOI_VERBOSE)
 {

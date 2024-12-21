@@ -180,8 +180,8 @@ function Invoke-Operation
         }
         catch
         {
-            Exit-Operation $_
-            return
+            Exit-Operation -Fail $_
+            throw $_
         }
     }
 }

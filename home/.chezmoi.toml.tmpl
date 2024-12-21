@@ -50,6 +50,7 @@
     personal = {{ $personal | toToml }}
     work = {{ $work | toToml }}
     ephemeral = {{ $ephemeral | toToml }}
+    development = {{ or $personal $work | toToml }}
 
 [data.supports]
     aws = {{ $aws | toToml }}

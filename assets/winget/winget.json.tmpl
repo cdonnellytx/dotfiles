@@ -31,7 +31,7 @@
         { "PackageIdentifier": "Zoom.Zoom" },
 
         // https://devblogs.microsoft.com/commandline/introducing-sudo-for-windows/
-        // {{- if (lt .chezmoi.windowsVersion.currentBuild 26052) -}}
+        // {{- if (lt (atoi .chezmoi.windowsVersion.currentBuild) 26052) -}}
         { "PackageIdentifier": "gerardog.gsudo" },
         // {{- end -}}
 

@@ -525,41 +525,53 @@ function Limit-WinGetPackage
             return Exit-Operation -Skip 'WhatIf'
         }
 
-        switch -Regex (Invoke-WinGetCli pin add --id $InputObject.Id @arguments)
+        try
         {
-            "^Found (?<Description>.+) \[(\w+\.\w+)]$"
+            # Success messages
+            switch -Regex (Invoke-WinGetCli pin add --id $InputObject.Id @arguments)
             {
-                # Found the package, good...
-                Write-Verbose $_
+                "^Found (?<Description>.+) \[(\w+\.\w+)]$"
+                {
+                    # Found the package, good...
+                    Write-Verbose $_
+                }
+                "^Pin added successfully$"
+                {
+                    # Success!
+                    Exit-Operation $_
+                }
+                "^There is already a pin\b"
+                {
+                    # Pin exists (normal)
+                    return Exit-Operation -Skip $_
+                }
+
+                default
+                {
+                    Write-Warning ($_ | ConvertTo-Json -Depth 44)
+                    return Exit-Operation -Fail $_
+                }
             }
-            "^Pin added successfully$"
+        }
+        catch
+        {
+            switch ($LASTEXITCODE)
             {
-                # Success!
-                Exit-Operation $_
-            }
-            "^There is already a pin\b"
-            {
-                # Pin exists (normal)
-                return Exit-Operation -Skip $_
+                0x8A150062
+                {
+                    # Pin exists but is blocking.  This is fine.
+                    return Exit-Operation -Skip "A pin (blocking) already exists."
+                }
+                0x8A150014
+                {
+                    return Exit-Operation -Fail 'No installed package found matching input criteria.'
+                }
             }
 
-            "^A pin already exists\b"
-            {
-                # Pin exists and is blocking
-                return Exit-Operation -Skip $_
-            }
-
-            "^No installed package found matching input criteria\b"
-            {
-                Write-Warning ($_ | ConvertTo-Json)
-                return Exit-Operation -Fail $_
-            }
-
-            default
-            {
-                Write-Warning ($_ | ConvertTo-Json)
-                return Exit-Operation -Fail $_
-            }
+            # Other error
+            # Write-Warning ($_ | ConvertTo-Json -Depth 44)
+            Exit-Operation -Fail $_
+            throw $_
         }
     }
 }
