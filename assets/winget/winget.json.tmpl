@@ -15,6 +15,7 @@
         { "PackageIdentifier": "JAMSoftware.TreeSize.Free" },
         { "PackageIdentifier": "JanDeDobbeleer.OhMyPosh" },
         { "PackageIdentifier": "jftuga.less" },
+        { "PackageIdentifier": "junegunn.fzf" },
         { "PackageIdentifier": "Microsoft.MouseandKeyboardCenter" },
         { "PackageIdentifier": "Microsoft.OneDrive" },
         { "PackageIdentifier": "Microsoft.PowerToys" },
@@ -68,8 +69,12 @@
         { "PackageIdentifier": "RicoSuter.NSwagStudio" },
         { "PackageIdentifier": "SQLite.SQLite" },
         { "PackageIdentifier": "Telerik.Fiddler.Classic" },
-        { "PackageIdentifier": "TortoiseGit.TortoiseGit" }
+        { "PackageIdentifier": "TortoiseGit.TortoiseGit" },
         // {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
+        // {{- end }}
+
+        // {{- if .supports.aws -}}
+        { "PackageIdentifier": "Amazon.AWSVPNClient" }
         // {{- end }}
       ],
       "SourceDetails": {
