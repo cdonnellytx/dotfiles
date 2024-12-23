@@ -13,7 +13,7 @@
     "*.toml.tmpl": "toml",
     "**/dot_config/git/config.tmpl": "toml", // because gitconfig isn't an option
     "**/dot_config/git/**/*.conf.tmpl": "toml", // because gitconfig isn't an option
-    "**/{Chocolatey,NuGet}/**/*.config.tmpl": "xml"
+    "**/{chocolatey,NuGet}/**/*.config.tmpl": "xml"
   },
 
   "go-template.languages": [

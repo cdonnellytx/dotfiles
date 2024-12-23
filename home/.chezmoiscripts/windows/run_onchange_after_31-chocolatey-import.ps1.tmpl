@@ -9,8 +9,8 @@ Will install apps if not found but not upgrade them.
 param()
 
 <#
-{{- $chocoManifestTemplatePath := joinPath .chezmoi.workingTree "assets/chocolatey/packages.config.tmpl" -}}
-assets/winget.json hash: {{ include $chocoManifestTemplatePath | sha256sum }}
+{{- $chocoManifestTemplatePath := joinPath .chezmoi.workingTree "assets/windows/chocolatey/packages.config.tmpl" -}}
+assets/windows/chocolatey/.packages.config hash: {{ include $chocoManifestTemplatePath | sha256sum }}
 #>
 
 $chocoManifestTemplate = "{{ $chocoManifestTemplatePath }}" | Get-Item -ErrorAction Stop

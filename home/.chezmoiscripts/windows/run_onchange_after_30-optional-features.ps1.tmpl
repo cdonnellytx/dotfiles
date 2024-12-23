@@ -1,0 +1,45 @@
+#requires -Version 7 -modules bootstrap.ux -RunAsAdministrator
+
+<#
+.SYNOPSIS
+Install Windows optional features.
+#>
+[CmdletBinding()]
+param()
+
+begin
+{
+    # SPECIAL Import "Dism" as Desktop.
+    # While it says it supports Core, not all commands do, notably the WindowsOptionalFeature commands we need.
+    $modules = Import-Module -Name 'Dism' -UseWindowsPowerShell -PassThru
+}
+
+clean
+{
+    $modules | Remove-Module -ErrorAction Ignore -Force
+}
+
+process
+{
+    <#
+    {{ $manifestTemplatePath := joinPath .chezmoi.workingTree "assets/windows/optional-features.json.tmpl" -}}
+    assets/windows/optional-features.json hash: {{ include $manifestTemplatePath | sha256sum }}
+    #>
+
+    '{{ $manifestTemplatePath }}' |
+        Get-Item -ErrorAction Stop |
+        Get-Content -Raw |
+        chezmoi execute-template |
+        ConvertFrom-Json |
+        ForEach-Object {
+            Invoke-Operation "Enabling feature '${_}'" {
+                $feat = Get-WindowsOptionalFeature -Online -FeatureName $_
+                if ($feat.State -eq 'Enabled')
+                {
+                    Skip-Operation 'already installed'
+                }
+
+                Enable-WindowsOptionalFeature -Online -FeatureName $_ -All -NoRestart | Out-Null
+            }
+        }
+}

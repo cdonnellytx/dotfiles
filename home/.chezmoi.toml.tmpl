@@ -27,6 +27,19 @@
 {{- $azure := false -}}
 {{- $games := $personal -}}
 
+{{- /* Path concatenation */ -}}
+{{- $pathSeparator := ":" -}}
+{{- if (eq .chezmoi.os "windows") -}}
+{{-     $pathSeparator = ";" -}}
+{{- end -}}
+
+{{- $PSModulePath := list (joinPath .chezmoi.workingTree "lib/modules") -}}
+{{- if (eq .chezmoi.os "windows") -}}
+{{-     $PSModulePath = append $PSModulePath (joinPath (env "windir") "system32/WindowsPowerShell/v1.0/Modules") -}}
+{{- end -}}
+
+{{- /****** Content ******/ -}}
+
 # PowerShell: use Core
 [interpreters.ps1]
     command = "pwsh"
@@ -42,7 +55,7 @@
 {{- end }}
 
 [env]
-    PSModulePath = {{ joinPath .chezmoi.workingTree "lib/modules"  | toToml }}
+    PSModulePath = {{ $PSModulePath | join $pathSeparator | toToml }}
 
 [data]
     name = {{ $name | toToml }}
