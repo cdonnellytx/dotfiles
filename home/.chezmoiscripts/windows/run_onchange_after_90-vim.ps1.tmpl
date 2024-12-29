@@ -1,0 +1,40 @@
+#requires -version 7 -modules Microsoft.PowerShell.Utility, bootstrap.knownfolders
+
+<#
+.SYNOPSIS
+Configures Vim in PATH.
+
+.NOTES
+Will run each time the following list of Vim executables changes.
+
+{{ glob (joinPath (env "ProgramFiles") "vim" "vim*" "vim.exe") }}
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+Set-StrictMode -Version Latest
+
+$vimHomes = Join-Path (Get-KnownFolder ProgramFiles) 'vim' |
+    Get-Item -ErrorAction Stop |
+    Get-ChildItem -Include 'vim[0-9]*' |
+    Where-Object { $_ | Get-ChildItem -Include 'vim.exe' } |
+    Sort-Object -Descending -Property { [int] $_.Name.Substring(3) }
+
+$latestVimHome = $vimHomes[0]
+
+[string[]] $inPath = (Get-PathVariable -Target User -Name 'PATH' | Where-Object { $_ -in $vimHomes.FullName }) ?? @()
+
+if ($inPath)
+{
+    # First one (ideally: only one) matches the latest.
+    if ($inPath[0] -eq $latestVimHome.FullName)
+    {
+        Invoke-Operation "Add VIM to PATH" { Skip-Operation "already set" }
+        return
+    }
+
+    # Remove the existing value(s).
+    Remove-PathVariable -Target User -Name 'PATH' -Value $inPath
+}
+
+Add-PathVariable -Target User -Name 'PATH' -Value $latestVimHome.FullName
