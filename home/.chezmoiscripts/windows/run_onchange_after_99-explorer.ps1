@@ -1,4 +1,4 @@
-#requires -version 7 -modules bootstrap.registry
+#requires -version 7 -modules bootstrap.explorer, bootstrap.registry
 
 <#
 .SYNOPSIS
@@ -8,11 +8,6 @@ Sets File Explorer options.
 param()
 
 Set-StrictMode -Version Latest
-
-function Restart-Explorer
-{
-    Get-Process 'explorer' | Stop-Process
-}
 
 # Pulled from BoxStarter.WinConfig, which unfortunately relies on Get-WMIObject
 if (!$PSCmdlet.ShouldProcess("Explorer", "Set Options"))

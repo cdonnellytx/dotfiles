@@ -133,3 +133,18 @@ function Confirm-PathIsShortcut
         return $Shortcut
     }
 }
+
+<#
+.SYNOPSIS
+Restart Explorer.
+#>
+function Restart-Explorer
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
+    if ($PSCmdlet.ShouldProcess('Explorer', 'Restart process'))
+    {
+        Stop-Process -Name 'explorer'
+    }
+}

@@ -1,4 +1,4 @@
-#requires -Version 7 -Modules bootstrap.registry
+#requires -Version 7 -Modules bootstrap.explorer, bootstrap.registry
 
 <#
 .SYNOPSIS
@@ -6,6 +6,7 @@ Sets keyboard delay in the registry.
 Requires reboot OR opening Control Panel to work.
 #>
 [CmdletBinding(SupportsShouldProcess)]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidGlobalVars', 'Global:restartExplorer')]
 param
 (
     # The keyboard delay (0 = fastest, 3 = slowest)
@@ -16,15 +17,13 @@ param
     [int] $Speed = 31
 )
 
-# Keyboard delay
-# 0..3 (faster..slower)
-$script:restartExplorer = $false
-$onChange = { $script:restartExplorer = $true }
+$global:restartExplorer = 0
+$onChange = { $global:restartExplorer++ }
 
 Confirm-RegistryEntry -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardDelay' -PropertyType DWORD -Value $Delay -OnChange:$onChange
 Confirm-RegistryEntry -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardSpeed' -PropertyType DWORD -Value $Speed -OnChange:$onChange
 
-if ($script:restartExplorer)
+if ($global:restartExplorer -gt 0)
 {
-    Stop-Process -Name explorer
+    Restart-Explorer
 }

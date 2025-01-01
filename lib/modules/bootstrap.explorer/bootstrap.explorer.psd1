@@ -1,6 +1,6 @@
 @{
     RootModule = 'bootstrap.explorer.psm1'
-    ModuleVersion = '0.2.0'
+    ModuleVersion = '0.3.0'
     GUID = '424bc105-b193-42a1-ba31-2564ce0fde16'
     Author = 'Chris R. Donnelly'
     CompanyName = ''
@@ -8,7 +8,8 @@
     FunctionsToExport = @(
         'Get-Shortcut',
         'New-Shortcut',
-        'Confirm-PathIsShortcut'
+        'Confirm-PathIsShortcut',
+        'Restart-Explorer'
     )
     CmdletsToExport = @()
     VariablesToExport = @()
