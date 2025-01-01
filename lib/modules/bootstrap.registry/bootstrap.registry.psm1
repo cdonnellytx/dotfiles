@@ -53,7 +53,10 @@ function Confirm-RegistryEntry
         # Specifies the type of property that this cmdlet adds.
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias("Type")]
-        [Nullable[Microsoft.Win32.RegistryValueKind]] $PropertyType = (if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String })
+        [Nullable[Microsoft.Win32.RegistryValueKind]] $PropertyType = (if ($Value -is [int]) { [RegistryValueKind]::DWord } else { [RegistryValueKind]::String }),
+
+        # An optional script block to run if the change is applied.
+        [scriptblock] $OnChange
     )
 
     process
@@ -66,17 +69,22 @@ function Confirm-RegistryEntry
                 {
                     # does not exist, add it
                     $_ | New-ItemProperty -Name $Name -Value $Value -PropertyType $PropertyType
-                    return
                 }
-
                 # It exists, compare the value
-                if ($Value -eq ($_ | Get-ItemPropertyValue -Name $Name))
+                elseif ($Value -eq ($_ | Get-ItemPropertyValue -Name $Name))
                 {
                     Skip-Operation "already set"
                     return
                 }
+                else
+                {
+                    $_ | Set-ItemProperty -Name $Name -Value $Value -PropertyType $PropertyType
+                }
 
-                $_ | Set-ItemProperty -Name $Name -Value $Value -PropertyType $PropertyType
+                if ($OnChange)
+                {
+                    & $OnChange
+                }
                 Exit-Operation
             }
             catch
