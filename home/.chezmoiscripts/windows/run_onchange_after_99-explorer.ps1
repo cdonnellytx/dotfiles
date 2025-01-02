@@ -33,10 +33,10 @@ Confirm-RegistryProperty -LiteralPath $cabinetStateKey -Name 'FullPath' -Propert
 # (Done here b/c it requires an Explorer restart.)
 Confirm-RegistryProperty -LiteralPath 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows\' -Name 'MenuDropAlignment' -PropertyType 'DWORD' -Value 0
 
-# Context menu in Windows 11: show all items
-# @see https://twitter.com/Nick_Craver/status/1494661475553714177
 if ([System.Environment]::OSVersion.Version -ge '10.0.22000.0')
 {
+    # Context menu in Windows 11: show all items
+    # @see https://twitter.com/Nick_Craver/status/1494661475553714177
     Confirm-RegistryProperty -LiteralPath 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32' -Name '(default)' -PropertyType 'String' -Value ''
 
     # Move taskbar icon alignment to the left
