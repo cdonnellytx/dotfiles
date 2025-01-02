@@ -195,59 +195,56 @@ function Set-EnvironmentVariable
     param
     (
         # The name of the environment variable.
-        [Parameter(Position = 0, Mandatory, ValueFromPipelineByPropertyName)]
+        [Parameter(Position = 0, Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string] $Name,
 
         # The value to set the variable to.
-        [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
+        [Parameter(Position = 1, Mandatory)]
         [AllowNull()]
         [AllowEmptyString()]
         [string] $Value,
 
         # Specifies one or more target scopes to modify.  Valid values are Process (the default), User, or Machine. Use of User or Machine will cause the new value to persist.
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
 
         # The operation name (optional)
-        [string] $Operation
+        [string] $Operation = "Set environment variable '${Name}' = '${Value}' (target: ${Target})"
     )
 
-    process
+    # for pretty-printing
+    [string] $msg = '{0} = {1} at {2}' -f `
+        (ConvertTo-Json -Compress -InputObject $Name),
+        (ConvertTo-Json -Compress -InputObject $Value),
+    ($Target -join ', ')
+
+    if (!$PSCmdlet.ShouldProcess($msg, "Set-EnvironmentVariable"))
     {
-        # for pretty-printing
-        [string] $msg = '{0} = {1} at {2}' -f `
-            (ConvertTo-Json -Compress -InputObject $Name),
-            (ConvertTo-Json -Compress -InputObject $Value),
-        ($Target -join ', ')
+        return
+    }
 
-        if (!$PSCmdlet.ShouldProcess($msg, "Set-EnvironmentVariable"))
-        {
-            return
-        }
+    Invoke-Operation -Name $Operation -ScriptBlock {
+        $Target | ForEach-Object {
+            # cdonnelly 2018-07-15:
+            # [Environment]::SetEnvironmentVariable for User can be slow, so check the value isn't the same first.
+            # The worst part is, I can't figure out what it is that's listening on my home PC:
+            #   - closed all Chrome/Electron apps
+            #   - even closed ConEmu and used a plain PowerShell
+            # Still takes ~20 seconds.
+            #
+            # TODO figure out a way to speed this up.
+            # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
 
-        Invoke-Operation -Name ($Operation ?? "Set environment variable '${Name}' = '${Value}' (target: ${Target})") {
-            $Target | ForEach-Object {
-                # cdonnelly 2018-07-15:
-                # [Environment]::SetEnvironmentVariable for User can be slow, so check the value isn't the same first.
-                # The worst part is, I can't figure out what it is that's listening on my home PC:
-                #   - closed all Chrome/Electron apps
-                #   - even closed ConEmu and used a plain PowerShell
-                # Still takes ~20 seconds.
-                #
-                # TODO figure out a way to speed this up.
-                # @see https://stackoverflow.com/questions/4825967/environment-setenvironmentvariable-takes-a-long-time-to-set-a-variable-at-user-o
-
-                [string] $oldValue = [Environment]::GetEnvironmentVariable($Name, $_)
-                if ($oldValue -ceq $Value)
-                {
-                    return Skip-Operation "same value"
-                }
-
-                # Strictly different
-                [Environment]::SetEnvironmentVariable($Name, $Value, $_)
+            [string] $oldValue = [Environment]::GetEnvironmentVariable($Name, $_)
+            if ($oldValue -ceq $Value)
+            {
+                return Skip-Operation "same value"
             }
+
+            # Strictly different
+            [Environment]::SetEnvironmentVariable($Name, $Value, $_)
         }
     }
 }
@@ -274,7 +271,7 @@ function Remove-EnvironmentVariable
         [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
 
         # The operation name (optional)
-        [string] $Operation
+        [string] $Operation = "Remove environment variable '${Name}' = '${Value}' (target: ${Target})"
     )
 
     process
@@ -289,7 +286,7 @@ function Remove-EnvironmentVariable
             return
         }
 
-        Invoke-Operation -Name ($Operation ?? "Remove environment variable '${Name}'") {
+        Invoke-Operation -Name $Operation -ScriptBlock {
             $Target | ForEach-Object {
                 # cdonnelly 2018-07-15:
                 # [Environment]::SetEnvironmentVariable for User/Process can be slow, so check the value isn't the same first.
