@@ -208,7 +208,10 @@ function Set-EnvironmentVariable
         # Specifies one or more target scopes to modify.  Valid values are Process (the default), User, or Machine. Use of User or Machine will cause the new value to persist.
         [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
-        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process
+        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
+
+        # The operation name (optional)
+        [string] $Operation
     )
 
     process
@@ -224,7 +227,7 @@ function Set-EnvironmentVariable
             return
         }
 
-        Invoke-Operation -Name "Set environment variable '${Name}' = '${Value}' (target: ${Target})" {
+        Invoke-Operation -Name ($Operation ?? "Set environment variable '${Name}' = '${Value}' (target: ${Target})") {
             $Target | ForEach-Object {
                 # cdonnelly 2018-07-15:
                 # [Environment]::SetEnvironmentVariable for User can be slow, so check the value isn't the same first.
@@ -268,7 +271,10 @@ function Remove-EnvironmentVariable
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias('Scope')]
         [ValidateNotNullOrEmpty()]
-        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process
+        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
+
+        # The operation name (optional)
+        [string] $Operation
     )
 
     process
@@ -283,7 +289,7 @@ function Remove-EnvironmentVariable
             return
         }
 
-        Invoke-Operation -Name "Remove environment variable '${Name}'" {
+        Invoke-Operation -Name ($Operation ?? "Remove environment variable '${Name}'") {
             $Target | ForEach-Object {
                 # cdonnelly 2018-07-15:
                 # [Environment]::SetEnvironmentVariable for User/Process can be slow, so check the value isn't the same first.
@@ -408,11 +414,15 @@ function Set-DelimitedEnvironmentVariable
         [Parameter()]
         [Alias('Scope')]
         [ValidateNotNullOrEmpty()]
-        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process
+        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
+
+        # The operation name (optional)
+        [string] $Operation = "Set environment variable '${Name}' = $($Value | ConvertTo-Json -Compress).join($($Delimiter | ConvertTo-Json -Compress)) (target: ${Target})"
     )
 
     [string] $sValue = [string]::Join($Delimiter, $Value)
-    Set-EnvironmentVariable -Name:$Name -Target:$Target -Value:$sValue
+
+    Set-EnvironmentVariable -Operation:$Operation -Name:$Name -Target:$Target -Value:$sValue
 }
 
 <#
@@ -656,10 +666,13 @@ function Set-PathVariable
         [Parameter()]
         [Alias('Scope')]
         [ValidateNotNullOrEmpty()]
-        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process
+        [EnvironmentVariableTarget[]] $Target = [EnvironmentVariableTarget]::Process,
+
+        # The operation name (optional)
+        [string] $Operation = "Set path environment variable '${Name}' = $($Value | ConvertTo-Json -Compress) (target: ${Target})"
     )
 
-    Set-DelimitedEnvironmentVariable -Name:$Name -Target:$Target -Value:($Value | Where-Object Length) -Delimiter:$script:PathDelim
+    Set-DelimitedEnvironmentVariable -Operation:$Operation -Name:$Name -Target:$Target -Value:($Value | Where-Object Length) -Delimiter:$script:PathDelim
 }
 
 function emphasize([object] $Object)
@@ -718,7 +731,10 @@ function Add-PathVariable
         # If false, the specified paths will only be added if they are not already in the environment variable.
         # Defaults to true for Prepend, false for Append.
         [Parameter()]
-        [switch] $Force = $Prepend
+        [switch] $Force = $Prepend,
+
+        # The operation name (optional)
+        [string] $Operation = "Add to path environment variable '${Name}' = $($Value | ConvertTo-Json -Compress) (target: ${Target})"
     )
 
     # Ditch trailing slash
@@ -773,7 +789,7 @@ function Add-PathVariable
         }
 
         # We've already confirmed, no need to confirm again
-        Set-PathVariable -Name:$Name -Value:$FinalValues -Target:$TargetItem -Confirm:$false
+        Set-PathVariable -Operation:$Operation -Name:$Name -Value:$FinalValues -Target:$TargetItem -Confirm:$false
     }
 }
 

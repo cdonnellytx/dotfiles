@@ -134,6 +134,7 @@ function Invoke-Operation
         [string] $Name,
 
         [Parameter(Position = 1, Mandatory)]
+        [Alias('Command')]
         [scriptblock] $ScriptBlock,
 
         [Parameter(ValueFromRemainingArguments)]

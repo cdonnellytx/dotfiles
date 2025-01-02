@@ -1,0 +1,19 @@
+#requires -version 7.0 -modules bootstrap.environment
+
+<#
+.SYNOPSIS
+Configures Beyond Compare.
+
+.NOTES
+Will run each time the following list of Beyond Compare executables changes.
+
+{{ glob (joinPath (env "ProgramFiles") "Beyond Compare*" "*.exe") }}
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+Set-StrictMode -Version Latest
+
+$Key = Get-ItemProperty -LiteralPath 'HKLM:\Software\Scooter Software\Beyond Compare' -Name 'ExePath' -ErrorAction Stop
+$Dir = Split-Path -LiteralPath $Key.ExePath
+Add-PathVariable -Name PATH -Target User -Value $Dir

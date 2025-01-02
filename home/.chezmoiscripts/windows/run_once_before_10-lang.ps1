@@ -7,9 +7,14 @@ Set CLI LANG variables.
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
+Set-StrictMode -Version Latest
+
+$charset = 'UTF-8'
+$locale = 'en_US.UTF-8'
+
 # POSIX LANG
-Set-EnvironmentVariable 'LANG' 'en_US.UTF-8' -Target User @PSBoundParameters
-Set-EnvironmentVariable 'LC_ALL' 'en_US.UTF-8' -Target User @PSBoundParameters
+Set-EnvironmentVariable @PSBoundParameters -Target User -Name 'LANG' -Value $locale
+Set-EnvironmentVariable @PSBoundParameters -Target User -Name 'LC_ALL' -Value $locale
 
 # Less
-Set-EnvironmentVariable 'LESSCHARSET' 'UTF-8' -Target User @PSBoundParameters
+Set-EnvironmentVariable @PSBoundParameters -Target User -Name 'LESSCHARSET' -Value $charset
