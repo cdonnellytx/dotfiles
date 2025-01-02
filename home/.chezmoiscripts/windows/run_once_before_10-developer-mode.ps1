@@ -10,4 +10,4 @@ https://stackoverflow.com/questions/44158326/win10-how-to-activate-developer-mod
 param()
 
 # Developer mode
-Confirm-RegistryEntry -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Name 'AllowDevelopmentWithoutDevLicense' -PropertyType DWORD -Value 1
+Confirm-RegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Name 'AllowDevelopmentWithoutDevLicense' -PropertyType DWORD -Value 1

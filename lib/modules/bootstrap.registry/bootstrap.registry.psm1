@@ -26,9 +26,9 @@ filter Format-Key
 
 <#
 .SYNOPSIS
-Gets the registry entry, or creates it if not found, and ensures it has the given value.
+Ensures the registry key exists and its property has the given value.
 #>
-function Confirm-RegistryEntry
+function Confirm-RegistryProperty
 {
     [CmdletBinding(SupportsShouldProcess)]
     param
@@ -61,7 +61,7 @@ function Confirm-RegistryEntry
 
     process
     {
-        Confirm-RegistryPath -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
+        Confirm-RegistryItem -LiteralPath:$LiteralPath -PassThru | ForEach-Object {
             Enter-Operation "Ensure registry entry '$($_ | Format-Key)' '${Name}'"
             try
             {
@@ -129,9 +129,9 @@ function mkitem([string] $LiteralPath)
 
 <#
 .SYNOPSIS
-Gets the registry paths, or creates them if not found.
+Ensures the given registry key exists.
 #>
-function Confirm-RegistryPath
+function Confirm-RegistryItem
 {
     [CmdletBinding(SupportsShouldProcess)]
     [OutputType([Microsoft.Win32.RegistryKey])]

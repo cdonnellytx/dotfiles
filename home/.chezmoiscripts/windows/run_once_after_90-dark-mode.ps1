@@ -15,5 +15,5 @@ param
 # The value is 0 for dark, 1 for light.
 $value = [int] [bool] $light
 
-Confirm-RegistryEntry -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -PropertyType DWORD -Value $value
-Confirm-RegistryEntry -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'SystemUsesLightTheme' -PropertyType DWORD -Value $value
+Confirm-RegistryProperty -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -PropertyType DWORD -Value $value
+Confirm-RegistryProperty -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'SystemUsesLightTheme' -PropertyType DWORD -Value $value

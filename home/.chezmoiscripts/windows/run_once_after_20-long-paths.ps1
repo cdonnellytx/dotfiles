@@ -9,4 +9,4 @@ https://stackoverflow.com/questions/44158326/win10-how-to-activate-developer-mod
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
-Confirm-RegistryEntry -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -PropertyType DWORD -Value 1
+Confirm-RegistryProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -PropertyType DWORD -Value 1

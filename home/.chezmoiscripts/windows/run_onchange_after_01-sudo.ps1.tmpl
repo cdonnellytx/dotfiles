@@ -13,5 +13,5 @@ Enable builtin Windows sudo (Windows 11 24H2 and later).
 param()
 
 {{- if (ge (atoi .chezmoi.windowsVersion.currentBuild) 26052) -}}
-Confirm-RegistryEntry -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo' -Name 'Enabled' -PropertyType DWORD -Value 3
+Confirm-RegistryProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo' -Name 'Enabled' -PropertyType DWORD -Value 3
 {{- end -}}

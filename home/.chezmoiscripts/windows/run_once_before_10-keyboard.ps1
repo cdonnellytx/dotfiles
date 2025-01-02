@@ -20,8 +20,8 @@ param
 $global:restartExplorer = 0
 $onChange = { $global:restartExplorer++ }
 
-Confirm-RegistryEntry -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardDelay' -PropertyType DWORD -Value $Delay -OnChange:$onChange
-Confirm-RegistryEntry -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardSpeed' -PropertyType DWORD -Value $Speed -OnChange:$onChange
+Confirm-RegistryProperty -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardDelay' -PropertyType DWORD -Value $Delay -OnChange:$onChange
+Confirm-RegistryProperty -LiteralPath 'HKCU:\Control Panel\Keyboard' -Name 'KeyboardSpeed' -PropertyType DWORD -Value $Speed -OnChange:$onChange
 
 if ($global:restartExplorer -gt 0)
 {
