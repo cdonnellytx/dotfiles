@@ -1,0 +1,52 @@
+#requires -Version 7 -Modules bootstrap.registry -RunAsAdministrator
+
+using namespace System.Diagnostics.CodeAnalysis
+
+<#
+.SYNOPSIS
+Enable Developer Mode and related items, including sudo.
+#>
+[CmdletBinding(SupportsShouldProcess)]
+param()
+
+Set-StrictMode -Version Latest
+
+<#
+.SYNOPSIS
+Enables Developer mode.
+.LINK
+https://stackoverflow.com/questions/44158326/win10-how-to-activate-developer-mode-using-powershell-or-cmd-exe
+#>
+function Confirm-DeveloperMode
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    [SuppressMessageAttribute("PSShouldProcess", "", Justification = 'PSBoundParameters')] # Because PSScriptAnalyzer team refuses to listen to reason. See bugs:  #194 #283 #521 #608
+    param()
+
+    Confirm-RegistryProperty @PSBoundParameters -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -Name 'AllowDevelopmentWithoutDevLicense' -PropertyType DWORD -Value 1
+}
+
+<#
+.SYNOPSIS
+Enable builtin Windows sudo (Windows 11 24H2 and later).
+.NOTES
+- 0 - disabled
+- 1 - new window
+- 2 - with input disabled
+- 3 - inline
+
+Based on Windows version.
+#>
+function Confirm-Sudo
+{
+    [CmdletBinding(SupportsShouldProcess)]
+    [SuppressMessageAttribute("PSShouldProcess", "", Justification = 'PSBoundParameters')] # Because PSScriptAnalyzer team refuses to listen to reason. See bugs:  #194 #283 #521 #608
+    param()
+
+    <# {{- if (ge (atoi .chezmoi.windowsVersion.currentBuild) 26052) -}} #>
+    Confirm-RegistryProperty @PSBoundParameters -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Sudo' -Name 'Enabled' -PropertyType DWORD -Value 3
+    <# {{- end -}} #>
+}
+
+Confirm-DeveloperMode
+Confirm-Sudo
