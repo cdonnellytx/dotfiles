@@ -6,6 +6,10 @@
 :: Moreover, an alternate file extension doesn't work, because however Chezmoi invokes programs, Windows tries to open the file as an unknown extension (suggesting Notepad among others).
 :: So we're left with batch files.
 ::
-{{if not (lookPath "pwsh") }}
+echo {{ "Install PowerShell Core..." }}
+{{if (lookPath "pwsh") -}}
+echo {{ "----------: [ \033[33mSKIP\033[0m ] (already installed)" }}
+{{- else -}}
 winget install --source "msstore" --id 9mz1snwt0n5d --silent --accept-package-agreements --accept-source-agreements
-{{end}}
+echo {{ "----------: [  \033[32mOK\033[0m  ]" }}
+{{- end }}

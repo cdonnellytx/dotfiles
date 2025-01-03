@@ -2,4 +2,4 @@
 [CmdletBinding(SupportsShouldProcess)]
 param()
 
-Set-EnvironmentVariable -Name 'RIPGREP_CONFIG_PATH' -Value (Join-Path ${HOME} '.ripgreprc') @PSBoundParameters
+Set-EnvironmentVariable -Name 'RIPGREP_CONFIG_PATH' -Target User -Value (Join-Path ${HOME} '.ripgreprc') @PSBoundParameters

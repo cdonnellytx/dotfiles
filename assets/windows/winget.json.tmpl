@@ -95,7 +95,9 @@
 
         // {{ if (has "python" .roles.development) -}}
         // Python
-        // {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
+        // Packages are based on minor version and not easy to choose.
+        { "PackageIdentifier": "Python.Python.3.13", "Scope": "user" },
+
         // {{- end }}
 
         // {{- end }}
