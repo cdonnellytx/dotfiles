@@ -1,4 +1,6 @@
-#requires -version 7 -modules Microsoft.PowerShell.Utility -RunAsAdministrator
+#{{- /* Go template file */ -}}
+# {{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+#requires -version 7 -modules Microsoft.PowerShell.Utility
 
 <#
 .SYNOPSIS
@@ -9,6 +11,13 @@ Will install apps if not found but not upgrade them.
 param()
 
 <#
+{{ if not $programs.choco -}}
+{{- fail "Chocolatey not installed" -}}
+{{- end -}}
+{{ if not $programs.sudo -}}
+{{- fail "Sudo not installed" -}}
+{{- end -}}
+
 {{- $chocoManifestTemplatePath := joinPath .chezmoi.workingTree "assets/windows/chocolatey/packages.config.tmpl" -}}
 assets/windows/chocolatey/.packages.config hash: {{ include $chocoManifestTemplatePath | sha256sum }}
 #>
@@ -27,7 +36,7 @@ if ($DebugPreference) { $chocoArgs += '--debug' }
 if ($WhatIfPreference) { $chocoArgs += '--what-if' }
 
 Invoke-Operation "Import Chocolatey packages.config" -WhatIf:$WhatIfPreference {
-    choco install $chocoManifest @chocoArgs
+    sudo choco install $chocoManifest @chocoArgs
     if (!$?)
     {
         Write-Error ("chocolatey exited with code 0x{0:X8}" -f $LASTEXITCODE)

@@ -1,4 +1,8 @@
+// chezmoi:template:left-delimiter="// {{"
 {
+  // {{- $role := get . "role" -}}
+  // {{- $work := eq $role "work" -}}
+  // {{- $personal := eq $role "personal" -}}
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
   "CreationDate": "2024-12-13T09:35:14.026-06:00",
   "Sources": [
@@ -31,52 +35,76 @@
         { "PackageIdentifier": "vim.vim" },
         { "PackageIdentifier": "Zoom.Zoom" },
 
-        // https://devblogs.microsoft.com/commandline/introducing-sudo-for-windows/
-        // {{- if (lt (atoi .chezmoi.windowsVersion.currentBuild) 26052) -}}
-        { "PackageIdentifier": "gerardog.gsudo" },
-        // {{- end -}}
+        // {{ if (lt (atoi .chezmoi.windowsVersion.currentBuild) 26052) -}}
+        // sudo
+        { "PackageIdentifier": "gerardog.gsudo", "Scope": "machine" },
+        // {{- else -}}
+        // sudo: https://devblogs.microsoft.com/commandline/introducing-sudo-for-windows/
+        // {{- end }}
 
         // Browsers (other)
         { "PackageIdentifier": "Google.Chrome" },
         { "PackageIdentifier": "Microsoft.Edge" },
 
-        // {{ if .personal }} Personal tools
+        // {{ if (eq $role "personal") -}}
+        // Personal tools
         { "PackageIdentifier": "Discord.Discord", "Scope": "user" },
         { "PackageIdentifier": "Logitech.GHUB" },
-        // {{ end }}
+        // {{- end }}
 
-        // {{ if .supports.games }} Games
+        // {{ if .roles.games -}}
+        // Games
         { "PackageIdentifier": "Valve.Steam" },
         { "PackageIdentifier": "WhirlwindFX.SignalRgb" },
-        // {{ end }}
+        // {{- end }}
 
-
-        // {{- if .development -}} Development
-        { "PackageIdentifier": "CoreyButler.NVMforWindows" },
+        // {{ if .roles.development -}}
+        // Development
         { "PackageIdentifier": "Docker.DockerDesktop" },
         { "PackageIdentifier": "GitHub.cli" },
         { "PackageIdentifier": "GitHub.GitHubDesktop" },
         { "PackageIdentifier": "GnuPG.Gpg4win" },
-        { "PackageIdentifier": "GoLang.Go" },
         { "PackageIdentifier": "Insomnia.Insomnia" },
         { "PackageIdentifier": "JetBrains.Toolbox" },
-        { "PackageIdentifier": "KirillOsenkov.MSBuildStructuredLogViewer" },
         { "PackageIdentifier": "Microsoft.DevHome" },
-        { "PackageIdentifier": "Microsoft.NuGet" },
         { "PackageIdentifier": "Microsoft.PerfView" },
         { "PackageIdentifier": "Microsoft.VisualStudioCode" },
         { "PackageIdentifier": "Microsoft.WebDeploy" },
         { "PackageIdentifier": "Microsoft.WinDbg" },
         { "PackageIdentifier": "Microsoft.WindowsADK" },
-        { "PackageIdentifier": "RicoSuter.NSwagStudio" },
         { "PackageIdentifier": "SQLite.SQLite" },
         { "PackageIdentifier": "Telerik.Fiddler.Classic" },
         { "PackageIdentifier": "TortoiseGit.TortoiseGit" },
+
+        // {{ if (has "dotnet" .roles.development) -}}
+        // .NET
+        { "PackageIdentifier": "KirillOsenkov.MSBuildStructuredLogViewer" },
+        { "PackageIdentifier": "Microsoft.NuGet" },
+        { "PackageIdentifier": "RicoSuter.NSwagStudio" },
+        // {{- end }}
+
+        // {{ if (has "go" .roles.development) -}}
+        // Golang
+        { "PackageIdentifier": "GoLang.Go" },
+        // {{- end }}
+
+        // {{ if (has "node" .roles.development) -}}
+        // Node
+        { "PackageIdentifier": "CoreyButler.NVMforWindows", "Scope": "user" },
+        // {{- end }}
+
+        // {{ if (has "python" .roles.development) -}}
+        // Python
         // {{- /* LATER: PYTHON Python.Python.3.12 */ -}}
         // {{- end }}
 
-        // {{- if .supports.aws -}}
-        { "PackageIdentifier": "Amazon.AWSVPNClient" }
+        // {{- end }}
+
+        // {{- if .roles.aws -}}
+        { "PackageIdentifier": "Amazon.AWSVPNClient" },
+        // {{ if (has "cli" .roles.aws) -}}
+        { "PackageIdentifier": "Amazon.AWSCLI" },
+        // {{- end }}
         // {{- end }}
       ],
       "SourceDetails": {
@@ -93,8 +121,8 @@
         { "PackageIdentifier": "9P7KNL5RWT25", "Title": "Sysinternals Suite" },
         { "PackageIdentifier": "9PDXGNCFSCZV", "Title": "Ubuntu" },
 
-        // {{ if .supports.games }}
-        { "PackageIdentifier": "XPDM5VSMTKQLBJ", "Title": "Battle.net" } // standalone installer requires additional args(!)
+        // {{ if .roles.games -}}
+        { "PackageIdentifier": "XPDM5VSMTKQLBJ", "Title": "Battle.net" }, // standalone installer requires additional args(!)
         // {{- end }}
       ],
       "SourceDetails":

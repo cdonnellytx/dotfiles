@@ -1,4 +1,4 @@
-{{if .work}}
+{{- if (eq (get . "role") "work") -}}
 <?xml version="1.0" encoding="utf-8"?>
 <configuration>
   <packageSources>
@@ -21,4 +21,4 @@
     </Global.VinSolutions>
   </packageSourceCredentials>
 </configuration>
-{{end}}
+{{- end -}}

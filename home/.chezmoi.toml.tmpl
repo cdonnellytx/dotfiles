@@ -1,36 +1,36 @@
 {{- $programs := includeTemplate "programs.tmpl" | fromJson -}}
+{{- $hostname := .chezmoi.hostname -}}
 
-{{- $name := promptStringOnce . "name" "❔ What is your full name" -}}
-{{- $email := promptStringOnce . "email" "❔ What is your email" -}}
+{{- $name               := promptStringOnce . "name"        "❔ What is your full name" -}}
+{{- $email              := promptStringOnce . "email"       "❔ What is your email"     -}}
+{{- $github_username    := promptStringOnce . "github.user" "❔ GitHub username"        -}}
 
-{{- /* Machine type */ -}}
-{{- $work := false -}}{{/* true if this machine is a work machine */}}
-{{- $personal := false -}}{{/* true if this machine is a personal machine */}}
-{{- $ephemeral := false -}}{{/* true if this machine is ephemeral */}}
 
-{{- if hasPrefix "CAI-" .chezmoi.hostname -}}
-{{-     $work = true -}}
-{{- else if hasSuffix "saurus" .chezmoi.hostname -}}
-{{-     $personal = true -}}
-{{- else if has .chezmoi.hostname (list "synology") -}}
-{{-     $personal = true -}}
+{{- /* Machine role */ -}}
+{{- $role := "" -}}
+{{- $roles := list "personal" "work" }}
+{{- if hasPrefix "CAI-" $hostname -}}
+{{-     $role = "work" -}}
+{{- else if hasSuffix "saurus" $hostname -}}
+{{-     $role = "personal" -}}
+{{- else if has $hostname (list "synology") -}}
+{{-     $role = "personal" -}}
 {{- else -}}
-{{      $kindChoices := list "personal" "work" "ephemeral" -}}
-{{      $kind := promptChoice (print "❔ What kind of machine is " .chezmoi.hostname) $kindChoices -}}
-{{      $work = eq $kind "work" -}}
-{{      $personal = eq $kind "personal" -}}
-{{      $ephemeral = eq $kind "ephemeral" -}}
+{{      $roleChoices := list "personal" "work" "ephemeral" -}}
+{{      $role := promptChoice (print "❔ What kind of machine is " $hostname) $roleChoices -}}
 {{- end -}}
 
-{{- /* Support flags */ -}}
-{{- $aws := $work -}}
-{{- $azure := false -}}
-{{- $games := $personal -}}
+{{- /* Role collection */ -}}
+{{- $roles_aws          := . | dig "roles" "aws"         (list) -}}
+{{- $roles_azure        := . | dig "roles" "azure"       (list) -}}
+{{- $roles_development  := . | dig "roles" "development" (list "dotnet" "node") -}}
+{{- $roles_games        := . | dig "roles" "games"       (list) -}}
+{{- $roles_hardware     := . | dig "roles" "hardware"    (list) -}}
 
-{{- /* Path concatenation */ -}}
-{{- $pathSeparator := ":" -}}
+{{- /* PATH concatenation */ -}}
+{{- $envPathSeparator := ":" -}}
 {{- if (eq .chezmoi.os "windows") -}}
-{{-     $pathSeparator = ";" -}}
+{{-     $envPathSeparator = ";" -}}
 {{- end -}}
 
 {{- $PSModulePath := list (joinPath .chezmoi.workingTree "lib/modules") -}}
@@ -45,27 +45,29 @@
     command = "pwsh"
     args = ["-NoLogo", "-NoProfile"]
 
+{{ if $programs.delta }}
 [diff]
-{{- if $programs.delta }}
-    # Using delta for two reasons:
-    #   1. It highlights the diff AND the underlying file syntax
-    #   2. It avoids problems with PAGER having command-line switches in them.
-    command = {{ $programs.delta | toToml }}
-    pager = {{ $programs.delta | toToml }}
-{{- end }}
+# Using delta for two reasons:
+#   1. It highlights the diff AND the underlying file syntax
+#   2. It avoids problems with PAGER having command-line switches in them.
+command = {{ $programs.delta | toToml }}
+pager = {{ $programs.delta | toToml }}
+{{ end }}
 
 [env]
-    PSModulePath = {{ $PSModulePath | join $pathSeparator | toToml }}
+PSModulePath = {{ $PSModulePath | join $envPathSeparator | toToml }}
 
 [data]
-    name = {{ $name | toToml }}
-    email = {{ $email | toToml }}
-    personal = {{ $personal | toToml }}
-    work = {{ $work | toToml }}
-    ephemeral = {{ $ephemeral | toToml }}
-    development = {{ or $personal $work | toToml }}
+name = {{ $name | toToml }}
+email = {{ $email | toToml }}
+role = {{ $role | toToml }}
 
-[data.supports]
-    aws = {{ $aws | toToml }}
-    azure = {{ $azure | toToml }}
-    games = {{ $games | toToml }}
+[data.github]
+user = {{ $github_username | toToml }}
+
+[data.roles]
+aws = {{ $roles_aws | toToml }}
+azure = {{ $roles_azure | toToml }}
+development = {{ $roles_development | toToml }}
+games = {{ $roles_games | toToml }}
+hardware = {{ $roles_hardware | toToml }}
