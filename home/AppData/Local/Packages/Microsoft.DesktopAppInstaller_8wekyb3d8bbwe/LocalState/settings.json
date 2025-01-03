@@ -1,0 +1,21 @@
+{
+    "$schema": "https://aka.ms/winget-settings.schema.json",
+    "experimentalFeatures": {
+        "fonts": true
+    },
+    "telemetry": {
+        "disable": true
+    },
+    "installBehavior": {
+        "preferences": {
+            "scope": "user"
+        }
+    },
+    "visual": {
+        "enableSixels": true
+    },
+    // For documentation on these settings, see: https://aka.ms/winget-settings
+    "source": {
+        "autoUpdateIntervalInMinutes": 60
+    }
+}
